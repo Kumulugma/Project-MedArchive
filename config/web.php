@@ -11,6 +11,8 @@ $config = [
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
+        '@web' => '//',                               
+        '@webroot' => dirname(__DIR__, 2) . '/public_html',  
     ],
     'components' => [
         'request' => [
