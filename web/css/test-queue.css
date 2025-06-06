@@ -1,0 +1,27 @@
+.test-queue-index .table .badge {
+    font-size: 0.7rem;
+}
+
+.queue-item.urgent {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+.queue-item.due {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+.calendar-view {
+    background-color: white;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.queue-actions {
+    white-space: nowrap;
+}
+
+.queue-actions .btn {
+    margin: 0 0.125rem;
+}

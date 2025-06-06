@@ -1,0 +1,159 @@
+html, body {
+    height: 100%;
+    font-size: 0.875rem;
+}
+
+.wrap {
+    min-height: 100%;
+    height: auto;
+    margin: 0 auto -60px;
+    padding: 0 0 60px;
+}
+
+.wrap > .container {
+    padding: 70px 15px 20px;
+}
+
+.footer {
+    height: 60px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #ddd;
+    padding-top: 20px;
+}
+
+.jumbotron {
+    text-align: center;
+    background-color: transparent;
+}
+
+.jumbotron .btn {
+    font-size: 21px;
+    padding: 14px 24px;
+}
+
+.not-set {
+    color: #c55;
+    font-style: italic;
+}
+
+.nav > li > form > button.logout {
+    padding: 15px;
+    border: none;
+}
+
+@media(max-width:767px) {
+    .nav li > form > button.logout {
+        display:block;
+        text-align: left;
+        width: 100%;
+        padding: 10px 15px;
+    }
+}
+
+.nav > li > form > button.logout:focus,
+.nav > li > form > button.logout:hover {
+    text-decoration: none;
+}
+
+.nav > li > form > button.logout:focus {
+    outline: none;
+}
+
+body {
+    padding-top: 56px;
+}
+
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.border-left-danger {
+    border-left: 0.25rem solid #e74a3b !important;
+}
+
+.text-xs {
+    font-size: 0.7rem;
+}
+
+.abnormal-value {
+    background-color: #f8d7da;
+    color: #721c24;
+    font-weight: bold;
+}
+
+.abnormal-low {
+    color: #0c5460;
+    background-color: #d1ecf1;
+}
+
+.abnormal-high {
+    color: #856404;
+    background-color: #fff3cd;
+}
+
+/* web/css/dashboard.css */
+.dashboard-index .card {
+    transition: all 0.3s;
+}
+
+.dashboard-index .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.dashboard-stats {
+    margin-bottom: 2rem;
+}
+
+.quick-actions .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-chart {
+    height: 300px;
+}
+
+/* web/css/test-template.css */
+.test-template-index .table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.parameter-form {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1rem;
+}
+
+.norm-config {
+    display: none;
+}
+
+.norm-config.active {
+    display: block;
+}
+
+.parameter-norms {
+    margin-left: 2rem;
+    border-left: 3px solid #dee2e6;
+    padding-left: 1rem;
+}
+
+.btn-xs {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.675rem;
+    line-height: 1.5;
+    border-radius: 0.125rem;
+}
