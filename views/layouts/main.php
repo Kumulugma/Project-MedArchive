@@ -62,8 +62,9 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                     . '<i class="fas fa-user-circle"></i> ' . Html::encode(Yii::$app->user->identity->username)
                     . '</a>'
                     . '<ul class="dropdown-menu dropdown-menu-end">'
-                    . '<li><a class="dropdown-item" href="#"><i class="fas fa-user-cog"></i> Profil</a></li>'
-                    . '<li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Ustawienia</a></li>'
+                    . '<li><a class="dropdown-item" href="' . \yii\helpers\Url::to(['/user/profile']) . '"><i class="fas fa-user-cog"></i> Profil</a></li>'
+                    . '<li><a class="dropdown-item" href="' . \yii\helpers\Url::to(['/user/settings']) . '"><i class="fas fa-cog"></i> Ustawienia</a></li>'
+                    . '<li><a class="dropdown-item" href="' . \yii\helpers\Url::to(['/user/change-password']) . '"><i class="fas fa-key"></i> Zmień hasło</a></li>'
                     . '<li><hr class="dropdown-divider"></li>'
                     . '<li>'
                     . Html::beginForm(['/site/logout'], 'post', ['class' => 'dropdown-item-form'])

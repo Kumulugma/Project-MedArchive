@@ -1,19 +1,27 @@
 <?php
 use yii\helpers\Html;
 use yii\grid\GridView;
+use app\assets\TestTemplateAsset;
+
+TestTemplateAsset::register($this);
 
 $this->title = 'Szablony badań';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="test-template-index">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><?= Html::encode($this->title) ?></h1>
-        <?= Html::a('Nowy szablon', ['create'], ['class' => 'btn btn-success']) ?>
+    <div class="page-header">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+            <h1 class="h2"><?= Html::encode($this->title) ?></h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <?= Html::a('Nowy szablon', ['create'], ['class' => 'btn btn-success']) ?>
+            </div>
+        </div>
     </div>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel,
         'options' => ['class' => 'table-responsive'],
         'tableOptions' => ['class' => 'table table-striped table-sm'],
         'columns' => [
@@ -21,19 +29,10 @@ $this->params['breadcrumbs'][] = $this->title;
             'name',
             'description:ntext',
             [
-                'attribute' => 'parameters',
-                'label' => 'Parametry',
+                'attribute' => 'parameters_count',
+                'label' => 'Liczba parametrów',
                 'value' => function($model) {
                     return count($model->parameters);
-                }
-            ],
-            [
-                'attribute' => 'status',
-                'value' => function($model) {
-                    return $model->status ? 'Aktywny' : 'Nieaktywny';
-                },
-                'contentOptions' => function($model) {
-                    return ['class' => $model->status ? 'text-success' : 'text-muted'];
                 }
             ],
             'created_at:datetime',
@@ -43,14 +42,14 @@ $this->params['breadcrumbs'][] = $this->title;
                 'buttons' => [
                     'view' => function ($url, $model, $key) {
                         return Html::a('<i class="fas fa-eye"></i>', $url, [
-                            'class' => 'btn btn-sm btn-outline-primary',
-                            'title' => 'Podgląd',
+                            'class' => 'btn btn-sm btn-outline-info',
+                            'title' => 'Zobacz szczegóły'
                         ]);
                     },
                     'update' => function ($url, $model, $key) {
                         return Html::a('<i class="fas fa-edit"></i>', $url, [
                             'class' => 'btn btn-sm btn-outline-secondary',
-                            'title' => 'Edytuj',
+                            'title' => 'Edytuj'
                         ]);
                     },
                     'delete' => function ($url, $model, $key) {
@@ -58,11 +57,11 @@ $this->params['breadcrumbs'][] = $this->title;
                             'class' => 'btn btn-sm btn-outline-danger',
                             'title' => 'Usuń',
                             'data-confirm' => 'Czy na pewno chcesz usunąć ten szablon?',
-                            'data-method' => 'post',
+                            'data-method' => 'post'
                         ]);
-                    },
-                ],
-            ],
-        ],
-    ]); ?>
+                    }
+                ]
+            ]
+        ]
+    ]) ?>
 </div>

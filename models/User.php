@@ -5,12 +5,63 @@ namespace app\models;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
-use yii\behaviors\TimestampBehavior;
 
+/**
+ * User model
+ *
+ * @property integer $id
+ * @property string $username
+ * @property string $password_hash
+ * @property string $email
+ * @property string $first_name
+ * @property string $last_name
+ * @property string $phone
+ * @property integer $status
+ * @property integer $created_at
+ * @property integer $updated_at
+ * @property integer $last_login_at
+ * @property string $auth_key
+ */
 class User extends ActiveRecord implements IdentityInterface
 {
-    const STATUS_INACTIVE = 0;
-    const STATUS_ACTIVE = 1;
+    const STATUS_DELETED = 0;
+    const STATUS_INACTIVE = 9;
+    const STATUS_ACTIVE = 10;
+
+    public function rules()
+    {
+        return [
+            ['status', 'default', 'value' => self::STATUS_ACTIVE],
+            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
+            
+            [['username', 'email'], 'required'],
+            [['username', 'email'], 'string', 'max' => 255],
+            ['username', 'unique'],
+            ['email', 'email'],
+            ['email', 'unique'],
+            
+            [['first_name', 'last_name'], 'string', 'max' => 100],
+            ['phone', 'string', 'max' => 20],
+            
+            [['created_at', 'updated_at', 'last_login_at'], 'integer'],
+        ];
+    }
+
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'username' => 'Nazwa użytkownika',
+            'email' => 'E-mail',
+            'first_name' => 'Imię',
+            'last_name' => 'Nazwisko',
+            'phone' => 'Telefon',
+            'status' => 'Status',
+            'created_at' => 'Data utworzenia',
+            'updated_at' => 'Data aktualizacji',
+            'last_login_at' => 'Ostatnie logowanie',
+        ];
+    }
 
     public static function tableName()
     {
@@ -20,25 +71,13 @@ class User extends ActiveRecord implements IdentityInterface
     public function behaviors()
     {
         return [
-            TimestampBehavior::class,
-        ];
-    }
-
-    public function rules()
-    {
-        return [
-            ['username', 'trim'],
-            ['username', 'required'],
-            ['username', 'unique'],
-            ['username', 'string', 'min' => 2, 'max' => 255],
-
-            ['email', 'trim'],
-            ['email', 'required'],
-            ['email', 'email'],
-            ['email', 'string', 'max' => 255],
-
-            ['status', 'default', 'value' => self::STATUS_ACTIVE],
-            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE]],
+            'timestamp' => [
+                'class' => 'yii\behaviors\TimestampBehavior',
+                'attributes' => [
+                    ActiveRecord::EVENT_BEFORE_INSERT => ['created_at', 'updated_at'],
+                    ActiveRecord::EVENT_BEFORE_UPDATE => ['updated_at'],
+                ],
+            ],
         ];
     }
 
@@ -49,12 +88,7 @@ class User extends ActiveRecord implements IdentityInterface
 
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        return null;
-    }
-
-    public static function findByUsername($username)
-    {
-        return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
+        return static::findOne(['auth_key' => $token, 'status' => self::STATUS_ACTIVE]);
     }
 
     public function getId()
@@ -70,6 +104,11 @@ class User extends ActiveRecord implements IdentityInterface
     public function validateAuthKey($authKey)
     {
         return $this->getAuthKey() === $authKey;
+    }
+
+    public static function findByUsername($username)
+    {
+        return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
     }
 
     public function validatePassword($password)
@@ -96,5 +135,16 @@ class User extends ActiveRecord implements IdentityInterface
             return true;
         }
         return false;
+    }
+
+    public function getFullName()
+    {
+        return trim($this->first_name . ' ' . $this->last_name) ?: $this->username;
+    }
+
+    public function updateLastLogin()
+    {
+        $this->last_login_at = time();
+        $this->save(false);
     }
 }

@@ -724,7 +724,6 @@ body {
 
 .site-login {
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--medical-primary) 0%, var(--medical-secondary) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -987,5 +986,59 @@ body {
     .navbar {
         min-height: 60px;
         padding: 6px 0;
+    }
+}
+
+/* Dodatkowe style dla wyświetlania norm w wynikach badań */
+
+.norm-info {
+    font-size: 0.9rem;
+}
+
+.norm-details {
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    border-left: 3px solid var(--medical-primary);
+}
+
+.norm-details .badge {
+    font-size: 0.7rem;
+    margin-right: 0.25rem;
+}
+
+.norm-details ul {
+    margin-bottom: 0;
+    font-size: 0.8rem;
+}
+
+.norm-details li {
+    padding: 0.1rem 0;
+}
+
+/* Kluczowe wartości w tabeli wyników */
+.key-values {
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.key-values .text-danger {
+    font-weight: 600;
+}
+
+.key-values .text-success {
+    font-weight: 500;
+}
+
+/* Responsywność dla norm */
+@media (max-width: 768px) {
+    .norm-details {
+        font-size: 0.8rem;
+        padding: 0.15rem;
+    }
+    
+    .norm-details .badge {
+        font-size: 0.6rem;
     }
 }

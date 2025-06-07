@@ -1,5 +1,4 @@
 <?php
-
 use yii\helpers\Html;
 use yii\grid\GridView;
 use app\assets\TestResultAsset;
@@ -11,13 +10,16 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="test-result-index">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><?= Html::encode($this->title) ?></h1>
-<?= Html::a('Nowy wynik', ['create'], ['class' => 'btn btn-success']) ?>
+    <div class="page-header">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+            <h1 class="h2"><?= Html::encode($this->title) ?></h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <?= Html::a('Nowy wynik', ['create'], ['class' => 'btn btn-success']) ?>
+            </div>
+        </div>
     </div>
 
-    <?=
-    GridView::widget([
+    <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'options' => ['class' => 'table-responsive'],
@@ -27,7 +29,7 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'testTemplateName',
                 'label' => 'Badanie',
-                'value' => function ($model) {
+                'value' => function($model) {
                     return $model->testTemplate->name;
                 }
             ],
@@ -37,10 +39,36 @@ $this->params['breadcrumbs'][] = $this->title;
                 'filter' => Html::input('date', 'TestResultSearch[test_date]', $searchModel->test_date, ['class' => 'form-control'])
             ],
             [
+                'label' => 'Kluczowe wartości',
+                'format' => 'raw',
+                'value' => function($model) {
+                    $values = [];
+                    $count = 0;
+                    foreach ($model->resultValues as $resultValue) {
+                        if ($count >= 3) break; // Pokazuj maksymalnie 3 wartości
+                        
+                        $value = $resultValue->value;
+                        $unit = $resultValue->parameter->unit ? ' ' . $resultValue->parameter->unit : '';
+                        $class = $resultValue->is_abnormal ? 'text-danger' : 'text-success';
+                        
+                        $values[] = '<span class="' . $class . '">' . 
+                                   Html::encode($resultValue->parameter->name) . ': ' . 
+                                   Html::encode($value) . $unit . '</span>';
+                        $count++;
+                    }
+                    
+                    if (count($model->resultValues) > 3) {
+                        $values[] = '<small class="text-muted">i ' . (count($model->resultValues) - 3) . ' więcej...</small>';
+                    }
+                    
+                    return implode('<br>', $values);
+                }
+            ],
+            [
                 'attribute' => 'has_abnormal_values',
                 'label' => 'Status',
                 'format' => 'raw',
-                'value' => function ($model) {
+                'value' => function($model) {
                     if ($model->has_abnormal_values) {
                         return '<span class="badge bg-danger">Nieprawidłowe</span>';
                     }
@@ -50,34 +78,29 @@ $this->params['breadcrumbs'][] = $this->title;
                     '' => 'Wszystkie',
                     '1' => 'Nieprawidłowe',
                     '0' => 'Prawidłowe'
-                        ], ['class' => 'form-control'])
+                ], ['class' => 'form-control'])
             ],
             [
                 'attribute' => 'comment',
-                'value' => function ($model) {
-                    return $model->comment ? Html::encode(substr($model->comment, 0, 50)) . '...' : '';
+                'value' => function($model) {
+                    return $model->comment ? Html::encode(substr($model->comment, 0, 50)) . 
+                           (strlen($model->comment) > 50 ? '...' : '') : '';
                 }
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => '{view} {update} {compare} {delete}',
+                'template' => '{view} {update} {delete}',
                 'buttons' => [
                     'view' => function ($url, $model, $key) {
                         return Html::a('<i class="fas fa-eye"></i>', $url, [
-                            'class' => 'btn btn-sm btn-outline-primary',
-                            'title' => 'Podgląd',
+                            'class' => 'btn btn-sm btn-outline-info',
+                            'title' => 'Zobacz szczegóły'
                         ]);
                     },
                     'update' => function ($url, $model, $key) {
                         return Html::a('<i class="fas fa-edit"></i>', $url, [
                             'class' => 'btn btn-sm btn-outline-secondary',
-                            'title' => 'Edytuj',
-                        ]);
-                    },
-                    'compare' => function ($url, $model, $key) {
-                        return Html::a('<i class="fas fa-chart-line"></i>', ['compare', 'templateId' => $model->test_template_id], [
-                            'class' => 'btn btn-sm btn-outline-info',
-                            'title' => 'Porównaj',
+                            'title' => 'Edytuj'
                         ]);
                     },
                     'delete' => function ($url, $model, $key) {
@@ -85,12 +108,11 @@ $this->params['breadcrumbs'][] = $this->title;
                             'class' => 'btn btn-sm btn-outline-danger',
                             'title' => 'Usuń',
                             'data-confirm' => 'Czy na pewno chcesz usunąć ten wynik?',
-                            'data-method' => 'post',
+                            'data-method' => 'post'
                         ]);
-                    },
-                ],
-            ],
-        ],
-    ]);
-    ?>
+                    }
+                ]
+            ]
+        ]
+    ]) ?>
 </div>
