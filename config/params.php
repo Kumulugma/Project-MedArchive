@@ -1,10 +1,9 @@
 <?php
 
 return [
-    'adminEmail' => 'admin@medarchive.local',
-    'senderEmail' => 'noreply@medarchive.local',
-    'senderName' => 'MedArchive System',
-    'app.name' => 'MedArchive',
-    'app.version' => '1.0.0',
-    'reminder.days' => 7, // Ile dni przed badaniem wysyłać przypomnienie
+    'adminEmail' => 'automat@k3e.pl',
+    'supportEmail' => 'automat@k3e.pl', // Zmień na swój prawdziwy email
+    'senderEmail' => 'automat@k3e.pl',  // Zmień na swój prawdziwy email  
+    'senderName' => 'MedArchive Support',
+    'user.passwordResetTokenExpire' => 3600, // 1 godzina
 ];

@@ -3,17 +3,22 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
-$this->title = 'Logowanie do MedArchive';
+$this->title = 'Resetowanie hasła';
 ?>
 
-<div class="site-login">
+<div class="site-request-password-reset">
     <div class="card shadow-lg border-0 rounded-lg">
         <div class="card-header">
-            <h3 class="text-center font-weight-light my-2">Logowanie do MedArchive</h3>
+            <h3 class="text-center font-weight-light my-2">Resetowanie hasła</h3>
         </div>
         <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Podaj adres e-mail powiązany z Twoim kontem, a wyślemy Ci link do resetowania hasła.
+            </div>
+
             <?php $form = ActiveForm::begin([
-                'id' => 'login-form',
+                'id' => 'request-password-reset-form',
                 'fieldConfig' => [
                     'template' => "{label}\n{input}\n{error}",
                     'labelOptions' => ['class' => 'form-label'],
@@ -22,34 +27,22 @@ $this->title = 'Logowanie do MedArchive';
                 ],
             ]); ?>
 
-            <?= $form->field($model, 'username')->textInput([
+            <?= $form->field($model, 'email')->textInput([
                 'autofocus' => true,
-                'placeholder' => 'Wprowadź nazwę użytkownika'
+                'type' => 'email',
+                'placeholder' => 'Wprowadź adres e-mail'
             ]) ?>
 
-            <?= $form->field($model, 'password')->passwordInput([
-                'placeholder' => 'Wprowadź hasło'
-            ]) ?>
-
-            <div class="form-check mb-3">
-                <?= $form->field($model, 'rememberMe')->checkbox([
-                    'template' => '<div class="form-check">{input} {label}</div>{error}',
-                    'labelOptions' => ['class' => 'form-check-label'],
-                    'inputOptions' => ['class' => 'form-check-input'],
-                ]) ?>
-            </div>
-
-            <div class="d-grid gap-2 mt-4 mb-0">
-                <?= Html::submitButton('Zaloguj się', [
-                    'class' => 'btn btn-primary btn-lg',
-                    'name' => 'login-button'
+            <div class="d-grid gap-2 mt-4">
+                <?= Html::submitButton('Wyślij link resetujący', [
+                    'class' => 'btn btn-primary btn-lg'
                 ]) ?>
             </div>
 
             <?php ActiveForm::end(); ?>
 
             <div class="text-center mt-3">
-                <?= Html::a('<i class="fas fa-question-circle"></i> Zapomniałeś hasła?', ['request-password-reset'], [
+                <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do logowania', ['login'], [
                     'class' => 'btn btn-outline-secondary'
                 ]) ?>
             </div>

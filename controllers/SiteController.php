@@ -7,7 +7,10 @@ use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\web\BadRequestHttpException;
 use app\models\LoginForm;
+use app\models\PasswordResetRequestForm;
+use app\models\ResetPasswordForm;
 
 class SiteController extends Controller
 {
@@ -74,5 +77,46 @@ class SiteController extends Controller
         Yii::$app->user->logout();
 
         return $this->redirect(['login']);
+    }
+
+    /**
+     * Żądanie resetowania hasła
+     */
+    public function actionRequestPasswordReset()
+    {
+        $model = new PasswordResetRequestForm();
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            if ($model->sendEmail()) {
+                Yii::$app->session->setFlash('success', 'Sprawdź swoją skrzynkę e-mail w celu dalszych instrukcji.');
+                return $this->goHome();
+            } else {
+                Yii::$app->session->setFlash('error', 'Niestety, nie możemy zresetować hasła dla podanego adresu email.');
+            }
+        }
+
+        return $this->render('requestPasswordResetToken', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Resetowanie hasła
+     */
+    public function actionResetPassword($token)
+    {
+        try {
+            $model = new ResetPasswordForm($token);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+
+        if ($model->load(Yii::$app->request->post()) && $model->validate() && $model->resetPassword()) {
+            Yii::$app->session->setFlash('success', 'Nowe hasło zostało zapisane.');
+            return $this->redirect(['login']);
+        }
+
+        return $this->render('resetPassword', [
+            'model' => $model,
+        ]);
     }
 }
