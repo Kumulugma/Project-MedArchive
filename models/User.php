@@ -25,14 +25,15 @@ use yii\web\IdentityInterface;
  */
 class User extends ActiveRecord implements IdentityInterface
 {
-const STATUS_INACTIVE = 0;
-const STATUS_ACTIVE = 1;
+    // POPRAWNE STAŁE STATUSU - zgodne z bazą danych
+    const STATUS_INACTIVE = 0;
+    const STATUS_ACTIVE = 1;
 
     public function rules()
     {
         return [
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
-            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
+            ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE]],
             
             [['username', 'email'], 'required'],
             [['username', 'email'], 'string', 'max' => 255],
@@ -139,7 +140,7 @@ const STATUS_ACTIVE = 1;
 
     public function getFullName()
     {
-        return trim($this->first_name . ' ' . $this->last_name) ?: $this->username;
+        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? '')) ?: $this->username;
     }
 
     public function updateLastLogin()

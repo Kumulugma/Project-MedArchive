@@ -10,6 +10,7 @@ use yii\data\ActiveDataProvider;
 use app\models\TestTemplate;
 use app\models\TestParameter;
 use app\models\ParameterNorm;
+use app\models\search\TestTemplateSearch;
 
 class TestTemplateController extends Controller {
 
@@ -28,20 +29,13 @@ class TestTemplateController extends Controller {
     }
 
     public function actionIndex() {
-        $dataProvider = new ActiveDataProvider([
-            'query' => TestTemplate::find()->with('parameters'),
-            'pagination' => [
-                'pageSize' => 20,
-            ],
-            'sort' => [
-                'defaultOrder' => [
-                    'name' => SORT_ASC,
-                ]
-            ],
-        ]);
+        // Dodany searchModel dla zgodności z widokiem
+        $searchModel = new TestTemplateSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
-                    'dataProvider' => $dataProvider,
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
         ]);
     }
 
@@ -136,86 +130,78 @@ class TestTemplateController extends Controller {
     }
 
     public function actionAddNorm($id, $parameterId)
-{
-    error_log("ADD NORM ACTION CALLED - Template ID: $id, Parameter ID: $parameterId");
-    
-    $template = $this->findModel($id);
-    $parameter = TestParameter::findOne($parameterId);
-    
-    if (!$parameter || $parameter->test_template_id != $template->id) {
-        throw new NotFoundHttpException('Parametr nie został znaleziony.');
-    }
-
-    $norm = new ParameterNorm();
-    $norm->parameter_id = $parameter->id;
-
-    error_log("POST data: " . json_encode(Yii::$app->request->post()));
-
-    if ($norm->load(Yii::$app->request->post())) {
-        error_log("Norm loaded successfully");
-        error_log("Norm data: " . json_encode($norm->attributes));
+    {
+        error_log("ADD NORM ACTION CALLED - Template ID: $id, Parameter ID: $parameterId");
         
-        // Handle multiple thresholds
-        if ($norm->type === 'multiple_thresholds') {
-            $thresholdValues = Yii::$app->request->post('threshold_value', []);
-            $thresholdLabels = Yii::$app->request->post('threshold_label', []);
-            $thresholdNormal = Yii::$app->request->post('threshold_normal', []);
-            $thresholdTypes = Yii::$app->request->post('threshold_type', []);
+        $template = $this->findModel($id);
+        $parameter = TestParameter::findOne($parameterId);
+        
+        if (!$parameter || $parameter->test_template_id != $template->id) {
+            throw new NotFoundHttpException('Parametr nie został znaleziony.');
+        }
+
+        $norm = new ParameterNorm();
+        $norm->parameter_id = $parameter->id;
+
+        error_log("POST data: " . json_encode(Yii::$app->request->post()));
+
+        if ($norm->load(Yii::$app->request->post())) {
+            error_log("Norm loaded successfully");
+            error_log("Norm data: " . json_encode($norm->attributes));
             
-            $thresholds = [];
-            for ($i = 0; $i < count($thresholdValues); $i++) {
-                if (!empty($thresholdValues[$i])) {
-                    $thresholds[] = [
-                        'value' => (float)$thresholdValues[$i],
-                        'label' => $thresholdLabels[$i] ?? '',
-                        'is_normal' => (bool)($thresholdNormal[$i] ?? false),
-                        'type' => $thresholdTypes[$i] ?? null,
-                    ];
+            // Handle multiple thresholds
+            if ($norm->type === 'multiple_thresholds') {
+                $thresholdValues = Yii::$app->request->post('threshold_value', []);
+                $thresholdLabels = Yii::$app->request->post('threshold_label', []);
+                $thresholdNormal = Yii::$app->request->post('threshold_normal', []);
+                $thresholdTypes = Yii::$app->request->post('threshold_type', []);
+                
+                $thresholds = [];
+                for ($i = 0; $i < count($thresholdValues); $i++) {
+                    if (!empty($thresholdValues[$i])) {
+                        $thresholds[] = [
+                            'value' => (float)$thresholdValues[$i],
+                            'label' => $thresholdLabels[$i] ?? '',
+                            'is_normal' => (bool)($thresholdNormal[$i] ?? false),
+                            'type' => $thresholdTypes[$i] ?? null,
+                        ];
+                    }
                 }
+                
+                // Sort by value
+                usort($thresholds, function($a, $b) {
+                    return $a['value'] <=> $b['value'];
+                });
+                
+                $norm->thresholds_config = json_encode($thresholds);
+                error_log("Thresholds config: " . $norm->thresholds_config);
             }
             
-            // Sort by value
-            usort($thresholds, function($a, $b) {
-                return $a['value'] <=> $b['value'];
-            });
-            
-            $norm->thresholds_config = json_encode($thresholds);
-            error_log("Thresholds config: " . $norm->thresholds_config);
-        }
-        
-        // Validate before save
-        if ($norm->validate()) {
-            error_log("Validation passed");
-            if ($norm->save()) {
-                error_log("Norm saved successfully with ID: " . $norm->id);
-                Yii::$app->session->setFlash('success', 'Norma została dodana.');
-                return $this->redirect(['view', 'id' => $template->id]);
+            // Validate before save
+            if ($norm->validate()) {
+                error_log("Validation passed");
+                if ($norm->save()) {
+                    error_log("Norm saved successfully with ID: " . $norm->id);
+                    Yii::$app->session->setFlash('success', 'Norma została dodana.');
+                    return $this->redirect(['view', 'id' => $template->id]);
+                } else {
+                    error_log("Save failed");
+                    Yii::$app->session->setFlash('error', 'Błąd zapisywania normy w bazie danych.');
+                }
             } else {
-                error_log("Save failed");
-                Yii::$app->session->setFlash('error', 'Błąd zapisywania normy w bazie danych.');
+                error_log("Validation failed");
+                error_log("Validation errors: " . json_encode($norm->getErrors()));
+                Yii::$app->session->setFlash('error', 'Błąd walidacji: ' . implode(', ', $norm->getFirstErrors()));
             }
         } else {
-            error_log("Validation failed");
-            error_log("Validation errors: " . json_encode($norm->getErrors()));
-            Yii::$app->session->setFlash('error', 'Błąd walidacji: ' . implode(', ', $norm->getFirstErrors()));
-        }
-    } else {
-        error_log("Norm NOT loaded from POST");
-    }
-
-    return $this->render('add-norm', [
-        'template' => $template,
-        'parameter' => $parameter,
-        'norm' => $norm,
-    ]);
-}
-
-    protected function findModel($id) {
-        if (($model = TestTemplate::findOne($id)) !== null) {
-            return $model;
+            error_log("Norm NOT loaded from POST");
         }
 
-        throw new NotFoundHttpException('Szablon badania nie został znaleziony.');
+        return $this->render('add-norm', [
+            'template' => $template,
+            'parameter' => $parameter,
+            'norm' => $norm,
+        ]);
     }
 
     public function actionReorderParameters() {
@@ -309,4 +295,11 @@ class TestTemplateController extends Controller {
         return $this->redirect(['view', 'id' => $template->id]);
     }
 
+    protected function findModel($id) {
+        if (($model = TestTemplate::findOne($id)) !== null) {
+            return $model;
+        }
+
+        throw new NotFoundHttpException('Szablon badania nie został znaleziony.');
+    }
 }

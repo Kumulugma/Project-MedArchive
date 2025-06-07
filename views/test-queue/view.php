@@ -11,24 +11,27 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="test-queue-view">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><?= Html::encode($this->title) ?></h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <?php if ($model->status === 'pending'): ?>
-                <?= Html::a('Oznacz jako wykonane', ['complete', 'id' => $model->id], [
-                    'class' => 'btn btn-success',
-                    'data-method' => 'post',
-                    'data-confirm' => 'Czy na pewno chcesz oznaczyć to badanie jako wykonane?'
+    <div class="page-header">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+            <h1 class="h2"><?= Html::encode($this->title) ?></h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <?php if ($model->status === 'pending'): ?>
+                    <?= Html::a('<i class="fas fa-check"></i> Oznacz jako wykonane', ['complete', 'id' => $model->id], [
+                        'class' => 'btn btn-success',
+                        'data-method' => 'post',
+                        'data-confirm' => 'Czy na pewno chcesz oznaczyć to badanie jako wykonane?'
+                    ]) ?>
+                <?php endif; ?>
+                <?= Html::a('<i class="fas fa-edit"></i> Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+                <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do listy', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
+                <?= Html::a('<i class="fas fa-trash"></i> Usuń', ['delete', 'id' => $model->id], [
+                    'class' => 'btn btn-outline-danger',
+                    'data' => [
+                        'confirm' => 'Czy na pewno chcesz usunąć to zaplanowane badanie?',
+                        'method' => 'post',
+                    ],
                 ]) ?>
-            <?php endif; ?>
-            <?= Html::a('Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-            <?= Html::a('Usuń', ['delete', 'id' => $model->id], [
-                'class' => 'btn btn-danger',
-                'data' => [
-                    'confirm' => 'Czy na pewno chcesz usunąć to zaplanowane badanie?',
-                    'method' => 'post',
-                ],
-            ]) ?>
+            </div>
         </div>
     </div>
 

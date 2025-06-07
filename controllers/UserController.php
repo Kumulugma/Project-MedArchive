@@ -5,9 +5,13 @@ namespace app\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\filters\AccessControl;
+use yii\data\ActiveDataProvider;
 use yii\web\NotFoundHttpException;
 use app\models\User;
-use app\models\PasswordForm;
+use app\models\LoginHistory;
+use app\models\TestResult;
+use app\models\TestTemplate;
+use app\models\TestQueue;
 
 class UserController extends Controller
 {
@@ -26,46 +30,73 @@ class UserController extends Controller
         ];
     }
 
-    public function actionProfile()
+    
+    /**
+     * Historia logowań użytkownika
+     */
+    public function actionLoginHistory()
     {
-        $model = Yii::$app->user->identity;
-        
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Profil został zaktualizowany.');
-            return $this->refresh();
-        }
+        $dataProvider = new ActiveDataProvider([
+            'query' => LoginHistory::find()
+                ->where(['user_id' => Yii::$app->user->id])
+                ->orderBy(['created_at' => SORT_DESC]),
+            'pagination' => [
+                'pageSize' => 20,
+            ],
+        ]);
 
-        return $this->render('profile', [
-            'model' => $model,
+        return $this->render('login-history', [
+            'dataProvider' => $dataProvider,
         ]);
     }
 
+    /**
+     * Profil użytkownika
+     */
+    public function actionProfile()
+    {
+        $user = Yii::$app->user->identity;
+        
+        // Statystyki użytkownika
+        $stats = [
+            'total_results' => \app\models\TestResult::find()->count(),
+            'total_templates' => \app\models\TestTemplate::find()->count(),
+            'pending_tests' => \app\models\TestQueue::find()->where(['status' => 'pending'])->count(),
+            'last_login' => LoginHistory::find()
+                ->where(['user_id' => $user->id, 'success' => true])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->one(),
+        ];
+
+        return $this->render('profile', [
+            'user' => $user,
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Ustawienia użytkownika
+     */
     public function actionSettings()
     {
-        $model = Yii::$app->user->identity;
-        
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+        $user = Yii::$app->user->identity;
+
+        if ($user->load(Yii::$app->request->post()) && $user->save()) {
             Yii::$app->session->setFlash('success', 'Ustawienia zostały zapisane.');
             return $this->refresh();
         }
 
         return $this->render('settings', [
-            'model' => $model,
+            'user' => $user,
         ]);
     }
 
+    /**
+     * Zmiana hasła
+     */
     public function actionChangePassword()
     {
-        $model = new PasswordForm();
-        $model->user = Yii::$app->user->identity;
-
-        if ($model->load(Yii::$app->request->post()) && $model->changePassword()) {
-            Yii::$app->session->setFlash('success', 'Hasło zostało zmienione.');
-            return $this->redirect(['profile']);
-        }
-
-        return $this->render('change-password', [
-            'model' => $model,
-        ]);
+        // Implementacja zmiany hasła
+        return $this->render('change-password');
     }
 }

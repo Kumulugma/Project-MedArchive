@@ -5,7 +5,7 @@ use app\assets\TestResultAsset;
 
 TestResultAsset::register($this);
 
-$this->title = 'Wynik: ' . $model->testTemplate->name;
+$this->title = 'Wynik badania: ' . $model->testTemplate->name;
 $this->params['breadcrumbs'][] = ['label' => 'Wyniki badań', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -15,13 +15,16 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
             <h1 class="h2"><?= Html::encode($this->title) ?></h1>
             <div class="btn-toolbar mb-2 mb-md-0">
-                <?= Html::a('Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-                <?= Html::a('Usuń', ['delete', 'id' => $model->id], [
-                    'class' => 'btn btn-danger',
-                    'data-confirm' => 'Czy na pewno chcesz usunąć ten wynik?',
-                    'data-method' => 'post'
+                <?= Html::a('<i class="fas fa-edit"></i> Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+                <?= Html::a('<i class="fas fa-chart-line"></i> Porównaj wyniki', ['compare', 'templateId' => $model->test_template_id], ['class' => 'btn btn-info']) ?>
+                <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do listy', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
+                <?= Html::a('<i class="fas fa-trash"></i> Usuń', ['delete', 'id' => $model->id], [
+                    'class' => 'btn btn-outline-danger',
+                    'data' => [
+                        'confirm' => 'Czy na pewno chcesz usunąć ten wynik badania?',
+                        'method' => 'post',
+                    ],
                 ]) ?>
-                <?= Html::a('Lista wyników', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
             </div>
         </div>
     </div>

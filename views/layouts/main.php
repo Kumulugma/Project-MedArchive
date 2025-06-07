@@ -112,8 +112,6 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         <div class="row text-muted">
             <div class="col-md-6 text-start">
                 <strong>&copy; MedArchive <?= date('Y') ?></strong>
-                <br>
-                <small>System archiwizacji wyników badań medycznych</small>
             </div>
             <div id="support" class="col-md-6 text-end">
                 <span class="mb-3 mb-md-0 text-body-secondary">Wspierane przez: <a href="//k3e.pl"><span>K</span>3e.pl</a></span>

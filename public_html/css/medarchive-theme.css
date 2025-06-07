@@ -1042,3 +1042,7 @@ body {
         font-size: 0.6rem;
     }
 }
+.btn-toolbar{
+    gap: 20px;
+}
+

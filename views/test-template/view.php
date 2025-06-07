@@ -1,25 +1,31 @@
 <?php
 use yii\helpers\Html;
 use yii\widgets\DetailView;
+use app\assets\TestTemplateAsset;
 
-$this->title = $model->name;
+TestTemplateAsset::register($this);
+
+$this->title = 'Szablon badania: ' . $model->name;
 $this->params['breadcrumbs'][] = ['label' => 'Szablony badań', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="test-template-view">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><?= Html::encode($this->title) ?></h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-            <?= Html::a('Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-            <?= Html::a('Dodaj parametr', ['add-parameter', 'id' => $model->id], ['class' => 'btn btn-success']) ?>
-            <?= Html::a('Usuń', ['delete', 'id' => $model->id], [
-                'class' => 'btn btn-danger',
-                'data' => [
-                    'confirm' => 'Czy na pewno chcesz usunąć ten szablon?',
-                    'method' => 'post',
-                ],
-            ]) ?>
+    <div class="page-header">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+            <h1 class="h2"><?= Html::encode($this->title) ?></h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <?= Html::a('<i class="fas fa-edit"></i> Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+                <?= Html::a('<i class="fas fa-plus"></i> Dodaj parametr', ['add-parameter', 'id' => $model->id], ['class' => 'btn btn-success']) ?>
+                <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do listy', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
+                <?= Html::a('<i class="fas fa-trash"></i> Usuń', ['delete', 'id' => $model->id], [
+                    'class' => 'btn btn-outline-danger',
+                    'data' => [
+                        'confirm' => 'Czy na pewno chcesz usunąć ten szablon badania?',
+                        'method' => 'post',
+                    ],
+                ]) ?>
+            </div>
         </div>
     </div>
 

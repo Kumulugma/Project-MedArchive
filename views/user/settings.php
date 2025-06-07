@@ -28,25 +28,33 @@ $this->params['breadcrumbs'][] = $this->title;
                     <?php $form = ActiveForm::begin(); ?>
 
                     <h6 class="border-bottom pb-2 mb-3">Powiadomienia</h6>
-                    
+
                     <div class="form-check mb-3">
-                        <?= Html::checkbox('notifications_email', true, [
+                        <?=
+                        Html::checkbox('notifications_email', true, [
                             'class' => 'form-check-input',
                             'id' => 'notifications-email'
-                        ]) ?>
-                        <?= Html::label('Powiadomienia e-mail o nadchodzących badaniach', 'notifications-email', [
+                        ])
+                        ?>
+                        <?=
+                        Html::label('Powiadomienia e-mail o nadchodzących badaniach', 'notifications-email', [
                             'class' => 'form-check-label'
-                        ]) ?>
+                        ])
+                        ?>
                     </div>
 
                     <div class="form-check mb-3">
-                        <?= Html::checkbox('notifications_abnormal', true, [
+                        <?=
+                        Html::checkbox('notifications_abnormal', true, [
                             'class' => 'form-check-input',
                             'id' => 'notifications-abnormal'
-                        ]) ?>
-                        <?= Html::label('Powiadomienia o nieprawidłowych wynikach', 'notifications-abnormal', [
+                        ])
+                        ?>
+                        <?=
+                        Html::label('Powiadomienia o nieprawidłowych wynikach', 'notifications-abnormal', [
                             'class' => 'form-check-label'
-                        ]) ?>
+                        ])
+                        ?>
                     </div>
 
                     <h6 class="border-bottom pb-2 mb-3 mt-4">Wyświetlanie</h6>
@@ -55,56 +63,67 @@ $this->params['breadcrumbs'][] = $this->title;
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <?= Html::label('Format daty', 'date-format', ['class' => 'form-label']) ?>
-                                <?= Html::dropDownList('date_format', 'Y-m-d', [
+                                <?=
+                                Html::dropDownList('date_format', 'Y-m-d', [
                                     'Y-m-d' => '2024-12-31',
                                     'd-m-Y' => '31-12-2024',
                                     'd/m/Y' => '31/12/2024',
                                     'm/d/Y' => '12/31/2024'
-                                ], ['class' => 'form-control', 'id' => 'date-format']) ?>
+                                        ], ['class' => 'form-control', 'id' => 'date-format'])
+                                ?>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <?= Html::label('Strefa czasowa', 'timezone', ['class' => 'form-label']) ?>
-                                <?= Html::dropDownList('timezone', 'Europe/Warsaw', [
+                                <?=
+                                Html::dropDownList('timezone', 'Europe/Warsaw', [
                                     'Europe/Warsaw' => 'Europa/Warszawa (UTC+1)',
                                     'Europe/London' => 'Europa/Londyn (UTC+0)',
                                     'Europe/Berlin' => 'Europa/Berlin (UTC+1)',
                                     'America/New_York' => 'Ameryka/Nowy Jork (UTC-5)'
-                                ], ['class' => 'form-control', 'id' => 'timezone']) ?>
+                                        ], ['class' => 'form-control', 'id' => 'timezone'])
+                                ?>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group mb-3">
                         <?= Html::label('Liczba wyników na stronie', 'results-per-page', ['class' => 'form-label']) ?>
-                        <?= Html::dropDownList('results_per_page', '20', [
+                        <?=
+                        Html::dropDownList('results_per_page', '20', [
                             '10' => '10',
                             '20' => '20',
                             '50' => '50',
                             '100' => '100'
-                        ], ['class' => 'form-control', 'id' => 'results-per-page']) ?>
+                                ], ['class' => 'form-control', 'id' => 'results-per-page'])
+                        ?>
                     </div>
 
                     <h6 class="border-bottom pb-2 mb-3 mt-4">Eksport danych</h6>
 
                     <div class="form-group mb-3">
                         <?= Html::label('Domyślny format eksportu', 'export-format', ['class' => 'form-label']) ?>
-                        <?= Html::dropDownList('export_format', 'pdf', [
-                            'pdf' => 'PDF',
+                        <?=
+                        Html::dropDownList('export_format', 'excel', [
                             'excel' => 'Excel (.xlsx)',
-                            'csv' => 'CSV'
-                        ], ['class' => 'form-control', 'id' => 'export-format']) ?>
+                            'pdf' => 'PDF'
+                                ], ['class' => 'form-control', 'id' => 'export-format'])
+                        ?>
                     </div>
 
                     <div class="form-check mb-3">
-                        <?= Html::checkbox('include_norms_in_export', true, [
+                        <?=
+                        Html::checkbox('include_norms_in_export', true, [
                             'class' => 'form-check-input',
                             'id' => 'include-norms'
-                        ]) ?>
-                        <?= Html::label('Dołączaj normy w eksportach', 'include-norms', [
+                        ])
+                        ?>
+                        <?=
+                        Html::label('Dołączaj normy w eksportach', 'include-norms', [
                             'class' => 'form-check-label'
-                        ]) ?>
+                        ])
+                        ?>
                     </div>
 
                     <div class="form-group mt-4">
@@ -125,13 +144,19 @@ $this->params['breadcrumbs'][] = $this->title;
                     <h6 class="mb-3">Eksport danych</h6>
                     <p class="text-muted small">Eksportuj wszystkie swoje dane medyczne</p>
                     <div class="d-grid gap-2 mb-3">
-                        <?= Html::a('<i class="fas fa-download"></i> Eksportuj dane', '#', ['class' => 'btn btn-outline-info']) ?>
+                        <?=
+                        Html::a('<i class="fas fa-download"></i> Pełny eksport danych', ['../export/full-export'], [
+                            'class' => 'btn btn-outline-info export-btn',
+                            'data-bs-toggle' => 'tooltip',
+                            'title' => 'Eksportuj wszystkie dane w formacie Excel'
+                        ])
+                        ?>
                     </div>
 
                     <h6 class="mb-3 mt-4">Bezpieczeństwo</h6>
                     <div class="d-grid gap-2">
                         <?= Html::a('<i class="fas fa-key"></i> Zmień hasło', ['change-password'], ['class' => 'btn btn-outline-warning']) ?>
-                        <?= Html::a('<i class="fas fa-shield-alt"></i> Historia logowań', '#', ['class' => 'btn btn-outline-secondary']) ?>
+                        <?= Html::a('<i class="fas fa-shield-alt"></i> Historia logowań', ['login-history'], ['class' => 'btn btn-outline-secondary']) ?>
                     </div>
 
                     <div class="alert alert-warning mt-4">
@@ -140,6 +165,243 @@ $this->params['breadcrumbs'][] = $this->title;
                     </div>
                 </div>
             </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Szybki eksport</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Eksportuj konkretne dane</p>
+                    <div class="d-grid gap-2">
+
+                        <!-- Wyniki badań -->
+                        <div class="d-flex gap-1 mb-2">
+                            <span class="badge bg-secondary flex-shrink-0 align-self-center" style="min-width: 80px;">Wyniki</span>
+                            <?=
+                            Html::a('<i class="fas fa-file-excel"></i> Excel', ['../export/test-results', 'format' => 'excel'], [
+                                'class' => 'btn btn-outline-primary btn-sm flex-fill export-btn',
+                                'data-bs-toggle' => 'tooltip',
+                                'title' => 'Eksportuj wyniki badań do Excel'
+                            ])
+                            ?>
+                            <?=
+                            Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/test-results', 'format' => 'pdf'], [
+                                'class' => 'btn btn-outline-danger btn-sm flex-fill export-btn',
+                                'data-bs-toggle' => 'tooltip',
+                                'title' => 'Eksportuj wyniki badań do PDF'
+                            ])
+                            ?>
+                        </div>
+
+                        <!-- Szablony badań -->
+                        <div class="d-flex gap-1 mb-2">
+                            <span class="badge bg-success flex-shrink-0 align-self-center" style="min-width: 80px;">Szablony</span>
+                            <?=
+                            Html::a('<i class="fas fa-file-excel"></i> Excel', ['../export/test-templates', 'format' => 'excel'], [
+                                'class' => 'btn btn-outline-primary btn-sm flex-fill export-btn',
+                                'data-bs-toggle' => 'tooltip',
+                                'title' => 'Eksportuj szablony badań do Excel'
+                            ])
+                            ?>
+<?=
+Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/test-templates', 'format' => 'pdf'], [
+    'class' => 'btn btn-outline-danger btn-sm flex-fill export-btn',
+    'data-bs-toggle' => 'tooltip',
+    'title' => 'Eksportuj szablony badań do PDF'
+])
+?>
+                        </div>
+
+                        <!-- Kolejka badań -->
+                        <div class="d-flex gap-1 mb-2">
+                            <span class="badge bg-info flex-shrink-0 align-self-center" style="min-width: 80px;">Kolejka</span>
+                            <?=
+                            Html::a('<i class="fas fa-file-excel"></i> Excel', ['../export/test-queue', 'format' => 'excel'], [
+                                'class' => 'btn btn-outline-primary btn-sm flex-fill export-btn',
+                                'data-bs-toggle' => 'tooltip',
+                                'title' => 'Eksportuj kolejkę badań do Excel'
+                            ])
+                            ?>
+                            <?=
+                            Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/test-queue', 'format' => 'pdf'], [
+                                'class' => 'btn btn-outline-danger btn-sm flex-fill export-btn',
+                                'data-bs-toggle' => 'tooltip',
+                                'title' => 'Eksportuj kolejkę badań do PDF'
+                            ])
+                            ?>
+                        </div>
+
+                        <!-- Wszystkie dane -->
+                        <div class="d-flex gap-1">
+                            <span class="badge bg-warning flex-shrink-0 align-self-center" style="min-width: 80px;">Wszystko</span>
+<?=
+Html::a('<i class="fas fa-file-excel"></i> Excel', ['../export/full-export', 'format' => 'excel'], [
+    'class' => 'btn btn-primary btn-sm flex-fill export-btn',
+    'data-bs-toggle' => 'tooltip',
+    'title' => 'Pełny eksport wszystkich danych do Excel'
+])
+?>
+<?=
+Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/full-export', 'format' => 'pdf'], [
+    'class' => 'btn btn-danger btn-sm flex-fill export-btn',
+    'data-bs-toggle' => 'tooltip',
+    'title' => 'Pełny eksport wszystkich danych do PDF'
+])
+?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Informacje o koncie</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="text-muted">Użytkownik:</td>
+                            <td><strong><?= Html::encode(Yii::$app->user->identity->username) ?></strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Status:</td>
+                            <td><span class="badge bg-success">Aktywny</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Utworzono:</td>
+                            <td><?= Yii::$app->formatter->asDate(Yii::$app->user->identity->created_at) ?></td>
+                        </tr>
+                    </table>
+
+                    <div class="mt-3">
+<?=
+Html::a('<i class="fas fa-user"></i> Zobacz profil', ['profile'], [
+    'class' => 'btn btn-outline-secondary btn-sm w-100'
+])
+?>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    $(document).ready(function () {
+        // Inicjalizuj tooltips
+        $('[data-bs-toggle="tooltip"]').tooltip();
+
+        // Obsługa przycisków eksportu
+        $('.export-btn').on('click', function (e) {
+            var $btn = $(this);
+            var originalText = $btn.html();
+            var originalClass = $btn.attr('class');
+
+            // Pokaż loading
+            $btn.html('<i class="fas fa-spinner fa-spin"></i> Eksportowanie...');
+            $btn.removeClass().addClass('btn btn-secondary').prop('disabled', true);
+
+            // Po kliknięciu w link, przywróć przycisk po 3 sekundach
+            setTimeout(function () {
+                $btn.html(originalText);
+                $btn.attr('class', originalClass);
+                $btn.prop('disabled', false);
+
+                // Pokaż powiadomienie o sukcesie
+                showExportNotification('success', 'Eksport został rozpoczęty. Plik zostanie pobrany automatycznie.');
+            }, 1500);
+        });
+
+        // Walidacja formularza ustawień
+        $('#settings-form').on('submit', function (e) {
+            // Sprawdź czy wszystkie wymagane pola są wypełnione
+            var isValid = true;
+            $(this).find('[required]').each(function () {
+                if (!$(this).val()) {
+                    isValid = false;
+                    $(this).addClass('is-invalid');
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                showNotification('error', 'Proszę wypełnić wszystkie wymagane pola.');
+            }
+        });
+    });
+
+// Funkcja do pokazywania powiadomień
+    function showExportNotification(type, message) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+
+        const notification = $(`
+        <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+             style="top: 80px; right: 20px; z-index: 1050; min-width: 300px;">
+            <i class="fas fa-${icon}"></i> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `);
+
+        $('body').append(notification);
+
+        setTimeout(function () {
+            notification.alert('close');
+        }, 5000);
+    }
+
+    function showNotification(type, message) {
+        showExportNotification(type, message);
+    }
+</script>
+
+<style>
+    .export-btn {
+        transition: all 0.3s ease;
+    }
+
+    .export-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: box-shadow 0.15s ease-in-out;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .btn-outline-primary:hover,
+    .btn-outline-success:hover,
+    .btn-outline-info:hover,
+    .btn-outline-warning:hover,
+    .btn-outline-secondary:hover {
+        transform: translateY(-1px);
+    }
+
+    .alert-warning {
+        border-left: 4px solid #ffc107;
+        background-color: #fff3cd;
+    }
+
+    .table-borderless td {
+        border: none;
+        padding: 0.25rem 0;
+    }
+
+    .badge {
+        font-size: 0.75em;
+        padding: 0.35em 0.65em;
+    }
+</style>

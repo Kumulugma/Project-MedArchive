@@ -1,3 +1,4 @@
+<?php
 use yii\helpers\Html;
 use app\assets\TestTemplateAsset;
 
@@ -10,8 +11,13 @@ $this->params['breadcrumbs'][] = 'Edytuj normę';
 ?>
 
 <div class="update-norm">
-    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2"><?= Html::encode($this->title) ?></h1>
+    <div class="page-header">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+            <h1 class="h2"><?= Html::encode($this->title) ?></h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do szablonu', ['view', 'id' => $template->id], ['class' => 'btn btn-outline-secondary']) ?>
+            </div>
+        </div>
     </div>
 
     <?= $this->render('_norm_form', [
