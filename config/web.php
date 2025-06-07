@@ -8,15 +8,15 @@ $config = [
     'name' => 'MedArchive',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
+    'language' => 'pl-PL',
+    'timeZone' => 'Europe/Warsaw',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
-        '@web' => '//',                               
-        '@webroot' => dirname(__DIR__, 2) . '/public_html',  
     ],
     'components' => [
         'request' => [
-            'cookieValidationKey' => 'your-secret-key-here',
+            'cookieValidationKey' => 'twoj-tajny-klucz-tutaj',
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
@@ -30,7 +30,7 @@ $config = [
             'errorAction' => 'site/error',
         ],
         'mailer' => [
-            'class' => 'yii\swiftmailer\Mailer',
+            'class' => 'yii\symfonymailer\Mailer',
             'useFileTransport' => true,
         ],
         'log' => [
@@ -50,6 +50,31 @@ $config = [
                 '' => 'dashboard/index',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
+            ],
+        ],
+        'formatter' => [
+            'class' => 'yii\i18n\Formatter',
+            'locale' => 'pl-PL',
+            'timeZone' => 'Europe/Warsaw',
+            'dateFormat' => 'php:l, j F Y',           // poniedziałek, 11 marca 2025
+            'datetimeFormat' => 'php:l, j F Y, H:i',  // poniedziałek, 11 marca 2025, 14:30
+            'timeFormat' => 'php:H:i',                // 14:30
+            'decimalSeparator' => ',',
+            'thousandSeparator' => ' ',
+            'currencyCode' => 'PLN',
+        ],
+        'i18n' => [
+            'translations' => [
+                'app*' => [
+                    'class' => 'yii\i18n\PhpMessageSource',
+                    'sourceLanguage' => 'en-US',
+                    'basePath' => '@app/messages',
+                ],
+                'yii' => [
+                    'class' => 'yii\i18n\PhpMessageSource',
+                    'sourceLanguage' => 'en-US',
+                    'basePath' => '@app/messages',
+                ],
             ],
         ],
     ],

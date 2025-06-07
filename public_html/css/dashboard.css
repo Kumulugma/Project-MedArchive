@@ -1,0 +1,120 @@
+/* ==========================================================================
+   DASHBOARD SPECIFIC STYLES
+   ========================================================================== */
+
+.dashboard-stats .card {
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.dashboard-stats .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(44, 90, 160, 0.15);
+}
+
+.dashboard-stats .card-body {
+    padding: 1.5rem;
+}
+
+.dashboard-stats .text-xs {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+}
+
+.dashboard-stats .h5 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #495057;
+}
+
+.dashboard-stats .fa-2x {
+    opacity: 0.3;
+}
+
+/* Dashboard specific border colors */
+.border-left-primary {
+    border-left: 0.25rem solid var(--medical-primary) !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid var(--medical-accent) !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid var(--medical-warning) !important;
+}
+
+.border-left-danger {
+    border-left: 0.25rem solid var(--medical-danger) !important;
+}
+
+/* Chart container */
+.chart-area {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.chart-area canvas {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+/* Table in dashboard cards */
+.card .table {
+    margin-bottom: 0;
+}
+
+.card .table thead th {
+    background: transparent;
+    color: var(--medical-primary);
+    border-bottom: 2px solid var(--medical-primary);
+    font-size: 11px;
+    padding: 12px 8px;
+}
+
+.card .table tbody td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f1f3f4;
+    font-size: 13px;
+}
+
+/* Empty state styling */
+.text-center .fa-3x {
+    opacity: 0.3;
+}
+
+/* Dashboard responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard-stats .h5 {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-stats .card-body {
+        padding: 1rem;
+    }
+    
+    .dashboard-stats .text-xs {
+        font-size: 0.65rem;
+    }
+    
+    .chart-area {
+        height: 250px;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-stats .h5 {
+        font-size: 1.25rem;
+    }
+    
+    .dashboard-stats .fa-2x {
+        font-size: 1.5em;
+    }
+    
+    .chart-area {
+        height: 200px;
+    }
+}

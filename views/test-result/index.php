@@ -1,4 +1,5 @@
 <?php
+
 use yii\helpers\Html;
 use yii\grid\GridView;
 use app\assets\TestResultAsset;
@@ -12,10 +13,11 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="test-result-index">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2"><?= Html::encode($this->title) ?></h1>
-        <?= Html::a('Nowy wynik', ['create'], ['class' => 'btn btn-success']) ?>
+<?= Html::a('Nowy wynik', ['create'], ['class' => 'btn btn-success']) ?>
     </div>
 
-    <?= GridView::widget([
+    <?=
+    GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'options' => ['class' => 'table-responsive'],
@@ -25,7 +27,7 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'testTemplateName',
                 'label' => 'Badanie',
-                'value' => function($model) {
+                'value' => function ($model) {
                     return $model->testTemplate->name;
                 }
             ],
@@ -38,7 +40,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'has_abnormal_values',
                 'label' => 'Status',
                 'format' => 'raw',
-                'value' => function($model) {
+                'value' => function ($model) {
                     if ($model->has_abnormal_values) {
                         return '<span class="badge bg-danger">Nieprawidłowe</span>';
                     }
@@ -48,15 +50,14 @@ $this->params['breadcrumbs'][] = $this->title;
                     '' => 'Wszystkie',
                     '1' => 'Nieprawidłowe',
                     '0' => 'Prawidłowe'
-                ], ['class' => 'form-control'])
+                        ], ['class' => 'form-control'])
             ],
             [
                 'attribute' => 'comment',
-                'value' => function($model) {
+                'value' => function ($model) {
                     return $model->comment ? Html::encode(substr($model->comment, 0, 50)) . '...' : '';
                 }
             ],
-            'created_at:datetime',
             [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => '{view} {update} {compare} {delete}',
@@ -90,5 +91,6 @@ $this->params['breadcrumbs'][] = $this->title;
                 ],
             ],
         ],
-    ]); ?>
+    ]);
+    ?>
 </div>

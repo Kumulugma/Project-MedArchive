@@ -13,6 +13,7 @@ class DashboardAsset extends AssetBundle
     ];
     public $js = [
         'js/dashboard.js',
+        'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js',
     ];
     public $depends = [
         'app\assets\AppAsset',

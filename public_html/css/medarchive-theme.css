@@ -488,10 +488,40 @@ body {
 }
 
 /* ==========================================================================
+   GRID SUMMARY STYLING
+   ========================================================================== */
+
+.summary {
+    background: var(--medical-white);
+    border-radius: var(--border-radius);
+    padding: 10px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: var(--medical-gray);
+    font-weight: 500;
+}
+
+.summary b {
+    color: var(--medical-primary);
+    font-weight: 700;
+}
+
+.summary:empty {
+    display: none;
+}
+
+/* ==========================================================================
    MOBILE TABLE CARDS
    ========================================================================== */
 
 @media (max-width: 768px) {
+    .summary {
+        padding: 8px 12px;
+        margin: 8px 0;
+        font-size: 12px;
+        text-align: center;
+    }
+    
     .table-responsive {
         border-radius: 0;
         box-shadow: none;
