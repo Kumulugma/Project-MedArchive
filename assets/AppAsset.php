@@ -9,11 +9,11 @@ class AppAsset extends AssetBundle
     public $basePath = '@webroot';
     public $baseUrl = '@web';
     public $css = [
-        'css/site.css',
-        'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
+        'css/medarchive-theme.css',  // Główny plik stylów
+        'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
     ];
     public $js = [
-        'js/site.js',
+        'js/medarchive-main.js',     // Główny plik JavaScript
     ];
     public $depends = [
         'yii\web\YiiAsset',

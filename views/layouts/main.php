@@ -12,8 +12,8 @@ AppAsset::register($this);
 $this->registerCsrfMetaTags();
 $this->registerMetaTag(['charset' => Yii::$app->charset], 'charset');
 $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, initial-scale=1, shrink-to-fit=no']);
-$this->registerMetaTag(['name' => 'description', 'content' => $this->params['meta_description'] ?? '']);
-$this->registerMetaTag(['name' => 'keywords', 'content' => $this->params['meta_keywords'] ?? '']);
+$this->registerMetaTag(['name' => 'description', 'content' => $this->params['meta_description'] ?? 'MedArchive - System archiwizacji wyników badań medycznych']);
+$this->registerMetaTag(['name' => 'keywords', 'content' => $this->params['meta_keywords'] ?? 'medArchive, badania medyczne, wyniki, archiwizacja']);
 $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/favicon.ico')]);
 ?>
 <?php $this->beginPage() ?>
@@ -31,20 +31,21 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
     NavBar::begin([
         'brandLabel' => Yii::$app->name,
         'brandUrl' => Yii::$app->homeUrl,
-        'options' => ['class' => 'navbar-expand-md navbar-dark bg-primary fixed-top']
+        'options' => ['class' => 'navbar-expand-md navbar-dark fixed-top']
     ]);
     
     if (!Yii::$app->user->isGuest) {
         echo Nav::widget([
             'options' => ['class' => 'navbar-nav me-auto'],
             'items' => [
-                ['label' => 'Dashboard', 'url' => ['/dashboard/index']],
+                ['label' => '<i class="fas fa-tachometer-alt"></i> Dashboard', 'url' => ['/dashboard/index'], 'encode' => false],
                 [
-                    'label' => 'Badania', 
+                    'label' => '<i class="fas fa-flask"></i> Badania', 
+                    'encode' => false,
                     'items' => [
-                        ['label' => 'Szablony badań', 'url' => ['/test-template/index']],
-                        ['label' => 'Wyniki badań', 'url' => ['/test-result/index']],
-                        ['label' => 'Kolejka badań', 'url' => ['/test-queue/index']],
+                        ['label' => '<i class="fas fa-file-medical"></i> Szablony badań', 'url' => ['/test-template/index'], 'encode' => false],
+                        ['label' => '<i class="fas fa-clipboard-list"></i> Wyniki badań', 'url' => ['/test-result/index'], 'encode' => false],
+                        ['label' => '<i class="fas fa-calendar-alt"></i> Kolejka badań', 'url' => ['/test-queue/index'], 'encode' => false],
                     ]
                 ],
             ]
@@ -55,14 +56,23 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         'options' => ['class' => 'navbar-nav ms-auto'],
         'items' => [
             Yii::$app->user->isGuest
-                ? ['label' => 'Logowanie', 'url' => ['/site/login']]
-                : '<li class="nav-item">'
-                    . Html::beginForm(['/site/logout'])
-                    . Html::submitButton(
-                        'Wyloguj (' . Yii::$app->user->identity->username . ')',
-                        ['class' => 'nav-link btn btn-link logout']
-                    )
+                ? ['label' => '<i class="fas fa-sign-in-alt"></i> Logowanie', 'url' => ['/site/login'], 'encode' => false]
+                : '<li class="nav-item dropdown">'
+                    . '<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">'
+                    . '<i class="fas fa-user-circle"></i> ' . Html::encode(Yii::$app->user->identity->username)
+                    . '</a>'
+                    . '<ul class="dropdown-menu dropdown-menu-end">'
+                    . '<li><a class="dropdown-item" href="#"><i class="fas fa-user-cog"></i> Profil</a></li>'
+                    . '<li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Ustawienia</a></li>'
+                    . '<li><hr class="dropdown-divider"></li>'
+                    . '<li>'
+                    . Html::beginForm(['/site/logout'], 'post', ['class' => 'dropdown-item-form'])
+                    . Html::submitButton('<i class="fas fa-sign-out-alt"></i> Wyloguj', [
+                        'class' => 'dropdown-item btn btn-link p-0 text-start w-100 border-0 bg-transparent'
+                    ])
                     . Html::endForm()
+                    . '</li>'
+                    . '</ul>'
                     . '</li>'
         ]
     ]);
@@ -73,18 +83,42 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 <main id="main" class="flex-shrink-0" role="main">
     <div class="container-fluid">
         <?php if (!empty($this->params['breadcrumbs'])): ?>
-            <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>
+            <div class="row">
+                <div class="col-12">
+                    <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>
+                </div>
+            </div>
         <?php endif ?>
-        <?= Alert::widget() ?>
-        <?= $content ?>
+        
+        <div class="row">
+            <div class="col-12">
+                <?= Alert::widget() ?>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="page-content">
+                    <?= $content ?>
+                </div>
+            </div>
+        </div>
     </div>
 </main>
 
-<footer id="footer" class="mt-auto py-3 bg-light">
-    <div class="container">
+<footer id="footer" class="mt-auto py-4 bg-light">
+    <div class="container-fluid">
         <div class="row text-muted">
-            <div class="col-md-6 text-start">&copy; MedArchive <?= date('Y') ?></div>
-            <div class="col-md-6 text-end"><?= Yii::powered() ?></div>
+            <div class="col-md-6 text-start">
+                <strong>&copy; MedArchive <?= date('Y') ?></strong>
+                <br>
+                <small>System archiwizacji wyników badań medycznych</small>
+            </div>
+            <div class="col-md-6 text-end">
+                <small><?= Yii::powered() ?></small>
+                <br>
+                <small>Wersja 1.0.0</small>
+            </div>
         </div>
     </div>
 </footer>

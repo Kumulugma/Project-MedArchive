@@ -1,0 +1,961 @@
+/* ==========================================================================
+   MedArchive - Medical Theme Stylesheet
+   ========================================================================== */
+
+:root {
+    /* Medical Color Palette */
+    --medical-primary: #2c5aa0;      /* Medical Blue */
+    --medical-secondary: #0066cc;     /* Bright Medical Blue */
+    --medical-accent: #00a86b;       /* Medical Green */
+    --medical-success: #28a745;      /* Success Green */
+    --medical-warning: #ffc107;      /* Warning Amber */
+    --medical-danger: #dc3545;       /* Medical Red */
+    --medical-info: #17a2b8;         /* Info Cyan */
+    
+    /* Neutral Colors */
+    --medical-white: #ffffff;
+    --medical-light-gray: #f8f9fa;
+    --medical-gray: #6c757d;
+    --medical-dark-gray: #495057;
+    --medical-dark: #2c3e50;
+    
+    /* Gradients */
+    --medical-gradient: linear-gradient(135deg, var(--medical-primary) 0%, var(--medical-secondary) 100%);
+    --medical-accent-gradient: linear-gradient(135deg, var(--medical-accent) 0%, var(--medical-success) 100%);
+    
+    /* Shadows */
+    --shadow-soft: 0 2px 10px rgba(44, 90, 160, 0.1);
+    --shadow-medium: 0 4px 20px rgba(44, 90, 160, 0.15);
+    --shadow-strong: 0 8px 30px rgba(44, 90, 160, 0.2);
+    
+    /* Border Radius */
+    --border-radius-sm: 6px;
+    --border-radius: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
+    
+    /* Transitions */
+    --transition-fast: 0.2s ease-in-out;
+    --transition-medium: 0.3s ease-in-out;
+    --transition-slow: 0.5s ease-in-out;
+}
+
+/* ==========================================================================
+   GLOBAL STYLES
+   ========================================================================== */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--medical-dark);
+    background-color: var(--medical-light-gray);
+    padding-top: 70px; /* Space for fixed navbar */
+}
+
+.container-fluid {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+/* Main content area */
+#main {
+    padding-top: 10px;
+}
+
+/* ==========================================================================
+   NAVIGATION BAR
+   ========================================================================== */
+
+.navbar {
+    background: var(--medical-gradient) !important;
+    box-shadow: var(--shadow-medium);
+    border: none;
+    padding: 12px 0;
+    min-height: 60px;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--medical-white) !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.navbar-brand:before {
+    content: "🏥";
+    margin-right: 8px;
+    font-size: 1.6rem;
+}
+
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+    padding: 8px 16px !important;
+    border-radius: var(--border-radius);
+    margin: 0 4px;
+    transition: all var(--transition-fast);
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--medical-white) !important;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.navbar-nav .dropdown-menu {
+    border: none;
+    box-shadow: var(--shadow-medium);
+    border-radius: var(--border-radius);
+    margin-top: 8px;
+}
+
+.navbar-nav .dropdown-item {
+    padding: 10px 20px;
+    transition: all var(--transition-fast);
+}
+
+.navbar-nav .dropdown-item:hover {
+    background: var(--medical-light-gray);
+    color: var(--medical-primary);
+}
+
+/* ==========================================================================
+   BREADCRUMBS
+   ========================================================================== */
+
+.breadcrumb {
+    background: var(--medical-white);
+    border-radius: var(--border-radius);
+    padding: 12px 20px;
+    margin: 15px 0 20px 0;
+    box-shadow: var(--shadow-soft);
+    border-left: 4px solid var(--medical-primary);
+}
+
+.breadcrumb-item {
+    font-size: 14px;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: var(--medical-gray);
+    font-weight: bold;
+}
+
+.breadcrumb-item a {
+    color: var(--medical-primary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.breadcrumb-item a:hover {
+    color: var(--medical-secondary);
+}
+
+.breadcrumb-item.active {
+    color: var(--medical-dark-gray);
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+
+.btn {
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    padding: 10px 20px;
+    border: none;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn:focus {
+    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.25);
+}
+
+/* Primary Button */
+.btn-primary {
+    background: var(--medical-gradient);
+    color: var(--medical-white);
+    box-shadow: var(--shadow-soft);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1e3f73 0%, #004499 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    color: var(--medical-white);
+}
+
+/* Success Button */
+.btn-success {
+    background: var(--medical-accent-gradient);
+    color: var(--medical-white);
+    box-shadow: var(--shadow-soft);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #007851 0%, #1e7e34 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    color: var(--medical-white);
+}
+
+/* Danger Button */
+.btn-danger {
+    background: linear-gradient(135deg, var(--medical-danger) 0%, #c82333 100%);
+    color: var(--medical-white);
+    box-shadow: var(--shadow-soft);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #bd2130 0%, #a71e2a 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    color: var(--medical-white);
+}
+
+/* Warning Button */
+.btn-warning {
+    background: linear-gradient(135deg, var(--medical-warning) 0%, #e0a800 100%);
+    color: var(--medical-dark);
+    box-shadow: var(--shadow-soft);
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #e0a800 0%, #d39e00 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    color: var(--medical-dark);
+}
+
+/* Info Button */
+.btn-info {
+    background: linear-gradient(135deg, var(--medical-info) 0%, #138496 100%);
+    color: var(--medical-white);
+    box-shadow: var(--shadow-soft);
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    color: var(--medical-white);
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background: var(--medical-white);
+    color: var(--medical-gray);
+    border: 2px solid var(--medical-gray);
+    box-shadow: var(--shadow-soft);
+}
+
+.btn-secondary:hover {
+    background: var(--medical-gray);
+    color: var(--medical-white);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+/* Outline Buttons */
+.btn-outline-primary {
+    border: 2px solid var(--medical-primary);
+    color: var(--medical-primary);
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: var(--medical-primary);
+    color: var(--medical-white);
+    transform: translateY(-2px);
+}
+
+.btn-outline-success {
+    border: 2px solid var(--medical-accent);
+    color: var(--medical-accent);
+    background: transparent;
+}
+
+.btn-outline-success:hover {
+    background: var(--medical-accent);
+    color: var(--medical-white);
+    transform: translateY(-2px);
+}
+
+.btn-outline-danger {
+    border: 2px solid var(--medical-danger);
+    color: var(--medical-danger);
+    background: transparent;
+}
+
+.btn-outline-danger:hover {
+    background: var(--medical-danger);
+    color: var(--medical-white);
+    transform: translateY(-2px);
+}
+
+.btn-outline-secondary {
+    border: 2px solid var(--medical-gray);
+    color: var(--medical-gray);
+    background: transparent;
+}
+
+.btn-outline-secondary:hover {
+    background: var(--medical-gray);
+    color: var(--medical-white);
+    transform: translateY(-2px);
+}
+
+/* Button Sizes */
+.btn-lg {
+    padding: 14px 28px;
+    font-size: 16px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-xs {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+/* ==========================================================================
+   FORMS AND INPUTS
+   ========================================================================== */
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 10px 14px;
+    font-size: 14px;
+    transition: all var(--transition-fast);
+    background: var(--medical-white);
+}
+
+.form-control:focus {
+    border-color: var(--medical-primary);
+    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+    outline: none;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--medical-dark-gray);
+    margin-bottom: 6px;
+}
+
+.form-select {
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+    padding: 10px 14px;
+    font-size: 14px;
+    transition: all var(--transition-fast);
+}
+
+.form-select:focus {
+    border-color: var(--medical-primary);
+    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+}
+
+.form-check-input {
+    border: 2px solid #e9ecef;
+}
+
+.form-check-input:checked {
+    background-color: var(--medical-primary);
+    border-color: var(--medical-primary);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+}
+
+/* ==========================================================================
+   CARDS AND CONTAINERS
+   ========================================================================== */
+
+.card {
+    border: none;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 24px;
+    overflow: hidden;
+    background: var(--medical-white);
+    transition: all var(--transition-fast);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--medical-light-gray) 0%, #e9ecef 100%);
+    border-bottom: 2px solid var(--medical-primary);
+    padding: 16px 20px;
+    font-weight: 600;
+    color: var(--medical-dark);
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-footer {
+    background: var(--medical-light-gray);
+    border-top: 1px solid #e9ecef;
+    padding: 12px 20px;
+}
+
+/* Page Header */
+.page-header {
+    background: var(--medical-white);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-soft);
+    border-left: 6px solid var(--medical-primary);
+}
+
+.page-header h1, .page-header h2 {
+    color: var(--medical-dark);
+    margin: 0;
+    font-weight: 700;
+}
+
+/* ==========================================================================
+   TABLES
+   ========================================================================== */
+
+.table-responsive {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    background: var(--medical-white);
+}
+
+.table {
+    margin: 0;
+    background: var(--medical-white);
+}
+
+.table thead th {
+    background: var(--medical-white);
+    color: var(--medical-primary);
+    font-weight: 700;
+    padding: 16px 12px;
+    border: none;
+    border-bottom: 3px solid var(--medical-primary);
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.table tbody td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: middle;
+    transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(44, 90, 160, 0.02);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(44, 90, 160, 0.01);
+}
+
+.table-sm th,
+.table-sm td {
+    padding: 10px 8px;
+}
+
+/* ==========================================================================
+   MOBILE TABLE CARDS
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .table-responsive {
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+        overflow: visible;
+    }
+    
+    .table {
+        border: none;
+        background: transparent;
+    }
+    
+    .table thead {
+        display: none;
+    }
+    
+    .table tbody {
+        display: block;
+    }
+    
+    .table tbody tr {
+        display: block;
+        background: var(--medical-white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-soft);
+        margin-bottom: 16px;
+        padding: 16px;
+        border-left: 4px solid var(--medical-primary);
+    }
+    
+    .table tbody tr:hover {
+        background: var(--medical-white);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+    
+    .table tbody td {
+        display: block;
+        padding: 8px 0;
+        border: none;
+        text-align: left;
+        position: relative;
+        padding-left: 50%;
+    }
+    
+    .table tbody td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: 600;
+        color: var(--medical-primary);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Hide empty cells on mobile */
+    .table tbody td:empty {
+        display: none;
+    }
+    
+    /* Action buttons styling for mobile */
+    .table tbody td .btn {
+        padding: 4px 8px;
+        font-size: 11px;
+        margin: 2px;
+        border-radius: var(--border-radius-sm);
+    }
+    
+    .table tbody td .btn i {
+        font-size: 10px;
+    }
+    
+    /* Compact action buttons container */
+    .table tbody td[data-label*="Akcje"],
+    .table tbody td:last-child {
+        padding-left: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--medical-light-gray);
+    }
+    
+    .table tbody td[data-label*="Akcje"]:before,
+    .table tbody td:last-child:before {
+        display: none;
+    }
+}
+
+/* Specific mobile enhancements for different table types */
+@media (max-width: 768px) {
+    /* Test results mobile cards */
+    .test-result-index .table tbody tr {
+        border-left-color: var(--medical-accent);
+    }
+    
+    .test-result-index .table tbody tr[data-abnormal="true"] {
+        border-left-color: var(--medical-danger);
+    }
+    
+    /* Test queue mobile cards */
+    .test-queue-index .table tbody tr[data-urgent="true"] {
+        border-left-color: var(--medical-warning);
+        background: rgba(255, 193, 7, 0.02);
+    }
+    
+    .test-queue-index .table tbody tr[data-overdue="true"] {
+        border-left-color: var(--medical-danger);
+        background: rgba(220, 53, 69, 0.02);
+    }
+    
+    /* Template index mobile cards */
+    .test-template-index .table tbody tr {
+        border-left-color: var(--medical-info);
+    }
+}
+
+/* Mobile badge adjustments */
+@media (max-width: 768px) {
+    .badge {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+}
+
+/* ==========================================================================
+   BADGES AND ALERTS
+   ========================================================================== */
+
+.badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: var(--border-radius);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge.bg-primary, .badge.bg-secondary {
+    background: var(--medical-primary) !important;
+}
+
+.badge.bg-success {
+    background: var(--medical-accent) !important;
+}
+
+.badge.bg-danger {
+    background: var(--medical-danger) !important;
+}
+
+.badge.bg-warning {
+    background: var(--medical-warning) !important;
+    color: var(--medical-dark) !important;
+}
+
+.badge.bg-info {
+    background: var(--medical-info) !important;
+}
+
+.alert {
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background: rgba(0, 168, 107, 0.1);
+    border-left-color: var(--medical-accent);
+    color: #155724;
+}
+
+.alert-danger {
+    background: rgba(220, 53, 69, 0.1);
+    border-left-color: var(--medical-danger);
+    color: #721c24;
+}
+
+.alert-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-left-color: var(--medical-warning);
+    color: #856404;
+}
+
+.alert-info {
+    background: rgba(23, 162, 184, 0.1);
+    border-left-color: var(--medical-info);
+    color: #0c5460;
+}
+
+/* ==========================================================================
+   LOGIN PAGE SPECIFIC
+   ========================================================================== */
+
+.site-login {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--medical-primary) 0%, var(--medical-secondary) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.site-login .card {
+    max-width: 420px;
+    width: 100%;
+    box-shadow: var(--shadow-strong);
+    border-radius: var(--border-radius-xl);
+}
+
+.site-login .card-header {
+    background: var(--medical-white);
+    text-align: center;
+    padding: 30px 20px 20px;
+    border-bottom: none;
+}
+
+.site-login .card-header h3 {
+    color: var(--medical-primary);
+    font-weight: 700;
+    margin: 0;
+    font-size: 24px;
+}
+
+.site-login .card-header h3:before {
+    content: "🏥";
+    display: block;
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.site-login .card-body {
+    padding: 20px 30px 30px;
+}
+
+.site-login .form-control {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-radius: var(--border-radius);
+    margin-bottom: 16px;
+}
+
+.site-login .btn-primary {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.site-login .card-footer {
+    text-align: center;
+    background: var(--medical-light-gray);
+    color: var(--medical-gray);
+    font-size: 12px;
+}
+
+/* ==========================================================================
+   DASHBOARD SPECIFIC
+   ========================================================================== */
+
+.dashboard-stats .card {
+    border-left: 4px solid;
+    transition: all var(--transition-fast);
+}
+
+.dashboard-stats .card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-medium);
+}
+
+.border-left-primary {
+    border-left-color: var(--medical-primary) !important;
+}
+
+.border-left-success {
+    border-left-color: var(--medical-accent) !important;
+}
+
+.border-left-warning {
+    border-left-color: var(--medical-warning) !important;
+}
+
+.border-left-danger {
+    border-left-color: var(--medical-danger) !important;
+}
+
+/* ==========================================================================
+   MEDICAL SPECIFIC STYLES
+   ========================================================================== */
+
+.abnormal-value {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: var(--medical-danger) !important;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+}
+
+.abnormal-low {
+    background-color: rgba(23, 162, 184, 0.1) !important;
+    color: var(--medical-info) !important;
+}
+
+.abnormal-high {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    color: #856404 !important;
+}
+
+.parameter-group {
+    background: var(--medical-white);
+    border: 2px solid #f1f3f4;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: all var(--transition-fast);
+}
+
+.parameter-group:hover {
+    border-color: var(--medical-primary);
+    box-shadow: var(--shadow-soft);
+}
+
+.parameter-group h6 {
+    color: var(--medical-primary);
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--medical-light-gray);
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+
+.text-medical-primary {
+    color: var(--medical-primary) !important;
+}
+
+.text-medical-accent {
+    color: var(--medical-accent) !important;
+}
+
+.bg-medical-light {
+    background-color: var(--medical-light-gray) !important;
+}
+
+.border-medical {
+    border-color: var(--medical-primary) !important;
+}
+
+.shadow-medical {
+    box-shadow: var(--shadow-medium);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 80px; /* Więcej miejsca na mobilnych - navbar może być wyższy */
+    }
+    
+    #main {
+        padding-top: 5px;
+    }
+    
+    .navbar {
+        min-height: 70px;
+        padding: 8px 0;
+    }
+    
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+    
+    .navbar-brand:before {
+        font-size: 1.4rem;
+        margin-right: 6px;
+    }
+    
+    .breadcrumb {
+        margin: 10px 0 15px 0;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .card-body {
+        padding: 16px;
+    }
+    
+    .page-header {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .table thead th {
+        padding: 12px 8px;
+        font-size: 11px;
+    }
+    
+    .table tbody td {
+        padding: 10px 8px;
+    }
+    
+    .site-login .card {
+        margin: 10px;
+    }
+    
+    .site-login .card-body {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    body {
+        padding-top: 85px; /* Jeszcze więcej miejsca na małych telefonach */
+    }
+    
+    .navbar {
+        min-height: 75px;
+    }
+    
+    .breadcrumb {
+        margin: 8px 0 12px 0;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+    
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    
+    .form-control {
+        padding: 8px 12px;
+    }
+}
+
+/* Dodatkowe media queries dla bardzo wysokich navbar na urządzeniach mobilnych */
+@media (max-width: 768px) and (orientation: landscape) {
+    body {
+        padding-top: 75px;
+    }
+}
+
+@media (max-width: 576px) and (orientation: landscape) {
+    body {
+        padding-top: 70px;
+    }
+    
+    .navbar {
+        min-height: 60px;
+        padding: 6px 0;
+    }
+}
