@@ -120,6 +120,9 @@ $config = [
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',
             ],
         ],
+        'thresholdManager' => [
+            'class' => 'app\components\MedicalThresholdManager'
+        ],
     ],
     'params' => $params,
 ];
