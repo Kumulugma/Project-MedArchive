@@ -9,13 +9,9 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="user-settings">
-    <div class="page-header">
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
-            <h1 class="h2"><?= Html::encode($this->title) ?></h1>
-            <div class="btn-toolbar mb-2 mb-md-0">
-                <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do profilu', ['profile'], ['class' => 'btn btn-outline-secondary']) ?>
-            </div>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-cog"></i> <?= Html::encode($this->title) ?></h1>
+        <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do profilu', ['profile'], ['class' => 'btn btn-outline-secondary']) ?>
     </div>
 
     <div class="row">
@@ -25,54 +21,9 @@ $this->params['breadcrumbs'][] = $this->title;
                     <h5 class="mb-0">Preferencje użytkownika</h5>
                 </div>
                 <div class="card-body">
-                    <?php $form = ActiveForm::begin(); ?>
-
-                    <h6 class="border-bottom pb-2 mb-3">Powiadomienia</h6>
-
-                    <div class="form-check mb-3">
-                        <?=
-                        Html::checkbox('notifications_email', true, [
-                            'class' => 'form-check-input',
-                            'id' => 'notifications-email'
-                        ])
-                        ?>
-                        <?=
-                        Html::label('Powiadomienia e-mail o nadchodzących badaniach', 'notifications-email', [
-                            'class' => 'form-check-label'
-                        ])
-                        ?>
-                    </div>
-
-                    <div class="form-check mb-3">
-                        <?=
-                        Html::checkbox('notifications_abnormal', true, [
-                            'class' => 'form-check-input',
-                            'id' => 'notifications-abnormal'
-                        ])
-                        ?>
-                        <?=
-                        Html::label('Powiadomienia o nieprawidłowych wynikach', 'notifications-abnormal', [
-                            'class' => 'form-check-label'
-                        ])
-                        ?>
-                    </div>
-
-                    <h6 class="border-bottom pb-2 mb-3 mt-4">Wyświetlanie</h6>
+                    <?php $form = ActiveForm::begin(['id' => 'settings-form']); ?>
 
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <?= Html::label('Format daty', 'date-format', ['class' => 'form-label']) ?>
-                                <?=
-                                Html::dropDownList('date_format', 'Y-m-d', [
-                                    'Y-m-d' => '2024-12-31',
-                                    'd-m-Y' => '31-12-2024',
-                                    'd/m/Y' => '31/12/2024',
-                                    'm/d/Y' => '12/31/2024'
-                                        ], ['class' => 'form-control', 'id' => 'date-format'])
-                                ?>
-                            </div>
-                        </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <?= Html::label('Strefa czasowa', 'timezone', ['class' => 'form-label']) ?>
@@ -80,8 +31,8 @@ $this->params['breadcrumbs'][] = $this->title;
                                 Html::dropDownList('timezone', 'Europe/Warsaw', [
                                     'Europe/Warsaw' => 'Europa/Warszawa (UTC+1)',
                                     'Europe/London' => 'Europa/Londyn (UTC+0)',
-                                    'Europe/Berlin' => 'Europa/Berlin (UTC+1)',
-                                    'America/New_York' => 'Ameryka/Nowy Jork (UTC-5)'
+                                    'America/New_York' => 'Ameryka/Nowy Jork (UTC-5)',
+                                    'Asia/Tokyo' => 'Azja/Tokio (UTC+9)'
                                         ], ['class' => 'form-control', 'id' => 'timezone'])
                                 ?>
                             </div>
@@ -97,18 +48,6 @@ $this->params['breadcrumbs'][] = $this->title;
                             '50' => '50',
                             '100' => '100'
                                 ], ['class' => 'form-control', 'id' => 'results-per-page'])
-                        ?>
-                    </div>
-
-                    <h6 class="border-bottom pb-2 mb-3 mt-4">Eksport danych</h6>
-
-                    <div class="form-group mb-3">
-                        <?= Html::label('Domyślny format eksportu', 'export-format', ['class' => 'form-label']) ?>
-                        <?=
-                        Html::dropDownList('export_format', 'excel', [
-                            'excel' => 'Excel (.xlsx)',
-                            'pdf' => 'PDF'
-                                ], ['class' => 'form-control', 'id' => 'export-format'])
                         ?>
                     </div>
 
@@ -203,13 +142,13 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'title' => 'Eksportuj szablony badań do Excel'
                             ])
                             ?>
-<?=
-Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/test-templates', 'format' => 'pdf'], [
-    'class' => 'btn btn-outline-danger btn-sm flex-fill export-btn',
-    'data-bs-toggle' => 'tooltip',
-    'title' => 'Eksportuj szablony badań do PDF'
-])
-?>
+                            <?=
+                            Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/test-templates', 'format' => 'pdf'], [
+                                'class' => 'btn btn-outline-danger btn-sm flex-fill export-btn',
+                                'data-bs-toggle' => 'tooltip',
+                                'title' => 'Eksportuj szablony badań do PDF'
+                            ])
+                            ?>
                         </div>
 
                         <!-- Kolejka badań -->
@@ -234,20 +173,20 @@ Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/test-templates', 'for
                         <!-- Wszystkie dane -->
                         <div class="d-flex gap-1">
                             <span class="badge bg-warning flex-shrink-0 align-self-center" style="min-width: 80px;">Wszystko</span>
-<?=
-Html::a('<i class="fas fa-file-excel"></i> Excel', ['../export/full-export', 'format' => 'excel'], [
-    'class' => 'btn btn-primary btn-sm flex-fill export-btn',
-    'data-bs-toggle' => 'tooltip',
-    'title' => 'Pełny eksport wszystkich danych do Excel'
-])
-?>
-<?=
-Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/full-export', 'format' => 'pdf'], [
-    'class' => 'btn btn-danger btn-sm flex-fill export-btn',
-    'data-bs-toggle' => 'tooltip',
-    'title' => 'Pełny eksport wszystkich danych do PDF'
-])
-?>
+                            <?=
+                            Html::a('<i class="fas fa-file-excel"></i> Excel', ['../export/full-export', 'format' => 'excel'], [
+                                'class' => 'btn btn-primary btn-sm flex-fill export-btn',
+                                'data-bs-toggle' => 'tooltip',
+                                'title' => 'Pełny eksport wszystkich danych do Excel'
+                            ])
+                            ?>
+                            <?=
+                            Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/full-export', 'format' => 'pdf'], [
+                                'class' => 'btn btn-danger btn-sm flex-fill export-btn',
+                                'data-bs-toggle' => 'tooltip',
+                                'title' => 'Pełny eksport wszystkich danych do PDF'
+                            ])
+                            ?>
                         </div>
                     </div>
                 </div>
@@ -274,11 +213,11 @@ Html::a('<i class="fas fa-file-pdf"></i> PDF', ['../export/full-export', 'format
                     </table>
 
                     <div class="mt-3">
-<?=
-Html::a('<i class="fas fa-user"></i> Zobacz profil', ['profile'], [
-    'class' => 'btn btn-outline-secondary btn-sm w-100'
-])
-?>
+                        <?=
+                        Html::a('<i class="fas fa-user"></i> Zobacz profil', ['profile'], [
+                            'class' => 'btn btn-outline-secondary btn-sm w-100'
+                        ])
+                        ?>
                     </div>
                 </div>
             </div>
@@ -332,23 +271,24 @@ Html::a('<i class="fas fa-user"></i> Zobacz profil', ['profile'], [
         });
     });
 
-// Funkcja do pokazywania powiadomień
+    // Funkcja do pokazywania powiadomień
     function showExportNotification(type, message) {
         const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-        const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
-
-        const notification = $(`
-        <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
-             style="top: 80px; right: 20px; z-index: 1050; min-width: 300px;">
-            <i class="fas fa-${icon}"></i> ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `);
-
+        const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+        
+        const notification = `
+            <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+                 style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                <i class="${icon}"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
         $('body').append(notification);
-
-        setTimeout(function () {
-            notification.alert('close');
+        
+        // Auto-hide po 5 sekundach
+        setTimeout(function() {
+            $('.alert').fadeOut();
         }, 5000);
     }
 
@@ -356,52 +296,3 @@ Html::a('<i class="fas fa-user"></i> Zobacz profil', ['profile'], [
         showExportNotification(type, message);
     }
 </script>
-
-<style>
-    .export-btn {
-        transition: all 0.3s ease;
-    }
-
-    .export-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-
-    .card {
-        border: none;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        transition: box-shadow 0.15s ease-in-out;
-    }
-
-    .card:hover {
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    }
-
-    .form-check-input:checked {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-    }
-
-    .btn-outline-primary:hover,
-    .btn-outline-success:hover,
-    .btn-outline-info:hover,
-    .btn-outline-warning:hover,
-    .btn-outline-secondary:hover {
-        transform: translateY(-1px);
-    }
-
-    .alert-warning {
-        border-left: 4px solid #ffc107;
-        background-color: #fff3cd;
-    }
-
-    .table-borderless td {
-        border: none;
-        padding: 0.25rem 0;
-    }
-
-    .badge {
-        font-size: 0.75em;
-        padding: 0.35em 0.65em;
-    }
-</style>

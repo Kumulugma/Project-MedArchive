@@ -74,9 +74,9 @@ $this->params['breadcrumbs'][] = 'Konfiguracja ostrzeżeń';
 
     <div class="row">
         <!-- Automatyczna konfiguracja -->
-        <div class="col-md-6">
+        <div class="col-md-12">
             <div class="card">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header">
                     <h5><i class="fas fa-magic"></i> Automatyczna konfiguracja</h5>
                 </div>
                 <div class="card-body">
@@ -87,98 +87,39 @@ $this->params['breadcrumbs'][] = 'Konfiguracja ostrzeżeń';
                     
                     <input type="hidden" name="auto_setup" value="1">
                     
-                    <div class="mb-3">
-                        <label class="form-label">Preset marginesów</label>
-                        <select name="preset" class="form-control">
-                            <?php foreach ($presets as $key => $preset): ?>
-                                <option value="<?= $key ?>" <?= $key === 'standard' ? 'selected' : '' ?>>
-                                    <?= Html::encode($preset['name']) ?> 
-                                    (<?= $preset['warning'] ?>%/<?= $preset['caution'] ?>%)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <small class="text-muted">Automatycznie dobierze marginesy dla wszystkich parametrów</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Wiek pacjenta (opcjonalnie)</label>
-                        <input type="number" name="patient_age" class="form-control" 
-                               placeholder="np. 45" min="0" max="120">
-                        <small class="text-muted">Pomoże dobrać marginesy odpowiednie dla wieku</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Schorzenia współistniejące</label>
-                        <div class="form-check">
-                            <input type="checkbox" name="conditions[]" value="diabetes" class="form-check-input" id="diabetes">
-                            <label class="form-check-label" for="diabetes">Cukrzyca</label>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Preset marginesów</label>
+                                <select name="preset" class="form-control">
+                                    <?php foreach ($presets as $key => $preset): ?>
+                                        <option value="<?= $key ?>" <?= $key === 'standard' ? 'selected' : '' ?>>
+                                            <?= Html::encode($preset['name']) ?>
+                                            (Ostrzeżenie: <?= $preset['warning_percent'] ?>%, Uwaga: <?= $preset['caution_percent'] ?>%)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <small class="text-muted">Wybierz domyślne marginesy dla wszystkich parametrów</small>
+                            </div>
                         </div>
-                        <div class="form-check">
-                            <input type="checkbox" name="conditions[]" value="hypertension" class="form-check-input" id="hypertension">
-                            <label class="form-check-label" for="hypertension">Nadciśnienie</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" name="conditions[]" value="kidney_disease" class="form-check-input" id="kidney_disease">
-                            <label class="form-check-label" for="kidney_disease">Choroby nerek</label>
-                        </div>
-                        <div class="form-check">
-                            <input type="checkbox" name="conditions[]" value="liver_disease" class="form-check-input" id="liver_disease">
-                            <label class="form-check-label" for="liver_disease">Choroby wątroby</label>
+                        
+                        <div class="col-md-8">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle"></i> Jak działają presety:</h6>
+                                <ul class="mb-0 small">
+                                    <li><strong>Konserwatywny:</strong> Większe marginesy bezpieczeństwa, więcej ostrzeżeń</li>
+                                    <li><strong>Standardowy:</strong> Zrównoważone podejście, zalecane dla większości przypadków</li>
+                                    <li><strong>Liberalny:</strong> Mniejsze marginesy, mniej ostrzeżeń</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-magic"></i> Skonfiguruj automatycznie
                     </button>
                     
                     <?php ActiveForm::end(); ?>
-                </div>
-            </div>
-        </div>
-
-        <!-- Kopiowanie z innego szablonu -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5><i class="fas fa-copy"></i> Kopiuj z innego szablonu</h5>
-                </div>
-                <div class="card-body">
-                    <?php $form = ActiveForm::begin([
-                        'action' => ['configure-warnings', 'id' => $model->id],
-                        'options' => ['class' => 'clone-form']
-                    ]); ?>
-                    
-                    <input type="hidden" name="clone_from" value="1">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Szablon źródłowy</label>
-                        <select name="source_template_id" class="form-control" required>
-                            <option value="">Wybierz szablon...</option>
-                            <?php foreach ($otherTemplates as $template): ?>
-                                <option value="<?= $template->id ?>">
-                                    <?= Html::encode($template->name) ?>
-                                    <?php
-                                    $templateStats = $template->getWarningsStatistics();
-                                    echo " ({$templateStats['coverage_percent']}% pokrycia)";
-                                    ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <small class="text-muted">Skopiuje konfigurację ostrzeżeń dla pasujących parametrów</small>
-                    </div>
-
-                    <button type="submit" class="btn btn-info w-100">
-                        <i class="fas fa-copy"></i> Skopiuj konfigurację
-                    </button>
-                    
-                    <?php ActiveForm::end(); ?>
-
-                    <div class="mt-3">
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle"></i>
-                            Kopiowane będą tylko parametry o identycznych nazwach
-                        </small>
-                    </div>
                 </div>
             </div>
         </div>
@@ -189,7 +130,7 @@ $this->params['breadcrumbs'][] = 'Konfiguracja ostrzeżeń';
         <div class="row mt-4">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header bg-warning">
+                    <div class="card-header">
                         <h5><i class="fas fa-exclamation-triangle"></i> Parametry bez ostrzeżeń</h5>
                     </div>
                     <div class="card-body">
@@ -208,10 +149,15 @@ $this->params['breadcrumbs'][] = 'Konfiguracja ostrzeżeń';
                                                 <small class="text-muted">(<?= Html::encode($parameter->unit) ?>)</small>
                                             <?php endif; ?>
                                         </div>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" 
-                                                onclick="quickSetupWarning(<?= $parameter->id ?>)">
-                                            <i class="fas fa-plus"></i> Dodaj
-                                        </button>
+                                        <?php if ($parameter->primaryNorm): ?>
+                                            <?= Html::a('<i class="fas fa-cog"></i> Konfiguruj', 
+                                                ['update-norm', 'id' => $model->id, 'parameterId' => $parameter->id, 'normId' => $parameter->primaryNorm->id], 
+                                                ['class' => 'btn btn-sm btn-outline-primary']) ?>
+                                        <?php else: ?>
+                                            <?= Html::a('<i class="fas fa-plus"></i> Dodaj normę', 
+                                                ['add-norm', 'id' => $model->id, 'parameterId' => $parameter->id], 
+                                                ['class' => 'btn btn-sm btn-outline-success']) ?>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -222,7 +168,7 @@ $this->params['breadcrumbs'][] = 'Konfiguracja ostrzeżeń';
         </div>
     <?php endif; ?>
 
-    <!-- Szczegółowa lista parametrów -->
+    <!-- Podgląd wszystkich parametrów -->
     <div class="row mt-4">
         <div class="col-md-12">
             <div class="card">
@@ -236,8 +182,9 @@ $this->params['breadcrumbs'][] = 'Konfiguracja ostrzeżeń';
                                 <tr>
                                     <th>Parametr</th>
                                     <th>Norma</th>
-                                    <th>Status ostrzeżeń</th>
-                                    <th>Marginesy</th>
+                                    <th>Ostrzeżenia</th>
+                                    <th>Margines ostrzeżenia</th>
+                                    <th>Margines uwagi</th>
                                     <th>Akcje</th>
                                 </tr>
                             </thead>
@@ -252,14 +199,16 @@ $this->params['breadcrumbs'][] = 'Konfiguracja ostrzeżeń';
                                         </td>
                                         <td>
                                             <?php if ($parameter->primaryNorm): ?>
-                                                <?php $norm = $parameter->primaryNorm; ?>
-                                                <?php if ($norm->type === 'range'): ?>
-                                                    <small><?= $norm->min_value ?> - <?= $norm->max_value ?></small>
-                                                <?php elseif ($norm->type === 'single_threshold'): ?>
-                                                    <small><?= $norm->threshold_direction === 'above' ? '≤' : '≥' ?> <?= $norm->threshold_value ?></small>
+                                                <?php if ($parameter->primaryNorm->type === 'range'): ?>
+                                                    <?= $parameter->primaryNorm->min_value ?> - <?= $parameter->primaryNorm->max_value ?>
+                                                <?php elseif ($parameter->primaryNorm->type === 'single_threshold'): ?>
+                                                    <?= $parameter->primaryNorm->threshold_direction === 'above' ? '≤' : '≥' ?>
+                                                    <?= $parameter->primaryNorm->threshold_value ?>
+                                                <?php else: ?>
+                                                    <small class="text-muted">Wielokrotne progi</small>
                                                 <?php endif; ?>
                                             <?php else: ?>
-                                                <span class="text-muted">Brak normy</span>
+                                                <span class="text-danger">Brak normy</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -271,27 +220,28 @@ $this->params['breadcrumbs'][] = 'Konfiguracja ostrzeżeń';
                                         </td>
                                         <td>
                                             <?php if ($parameter->primaryNorm && $parameter->primaryNorm->warning_enabled): ?>
-                                                <small><?= $parameter->primaryNorm->getMarginsDescription() ?></small>
+                                                <?= $parameter->primaryNorm->warning_margin_percent ?>%
                                             <?php else: ?>
                                                 <span class="text-muted">-</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <div class="btn-group" role="group">
-                                                <?php if ($parameter->primaryNorm): ?>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary" 
-                                                            onclick="quickSetupWarning(<?= $parameter->id ?>)">
-                                                        <i class="fas fa-cog"></i>
-                                                    </button>
-                                                    <?= Html::a('<i class="fas fa-edit"></i>', 
-                                                        ['edit-norm', 'id' => $model->id, 'normId' => $parameter->primaryNorm->id], 
-                                                        ['class' => 'btn btn-sm btn-outline-secondary']) ?>
-                                                <?php else: ?>
-                                                    <?= Html::a('<i class="fas fa-plus"></i>', 
-                                                        ['add-norm', 'id' => $model->id, 'parameterId' => $parameter->id], 
-                                                        ['class' => 'btn btn-sm btn-outline-success']) ?>
-                                                <?php endif; ?>
-                                            </div>
+                                            <?php if ($parameter->primaryNorm && $parameter->primaryNorm->warning_enabled): ?>
+                                                <?= $parameter->primaryNorm->caution_margin_percent ?>%
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($parameter->primaryNorm): ?>
+                                                <?= Html::a('<i class="fas fa-edit"></i>', 
+                                                    ['update-norm', 'id' => $model->id, 'parameterId' => $parameter->id, 'normId' => $parameter->primaryNorm->id], 
+                                                    ['class' => 'btn btn-outline-primary btn-sm', 'title' => 'Edytuj']) ?>
+                                            <?php else: ?>
+                                                <?= Html::a('<i class="fas fa-plus"></i>', 
+                                                    ['add-norm', 'id' => $model->id, 'parameterId' => $parameter->id], 
+                                                    ['class' => 'btn btn-outline-success btn-sm', 'title' => 'Dodaj normę']) ?>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -304,56 +254,9 @@ $this->params['breadcrumbs'][] = 'Konfiguracja ostrzeżeń';
     </div>
 </div>
 
-<!-- Modal dla szybkiej konfiguracji -->
-<div class="modal fade" id="quickSetupModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Szybka konfiguracja ostrzeżeń</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="quickSetupModalBody">
-                <!-- Zawartość ładowana przez AJAX -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function quickSetupWarning(parameterId) {
-    $('#quickSetupModalBody').html('<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Ładowanie...</div>');
-    $('#quickSetupModal').modal('show');
-    
-    $.get('<?= yii\helpers\Url::to(['quick-setup-warning', 'id' => $model->id]) ?>', {parameterId: parameterId})
-        .done(function(data) {
-            $('#quickSetupModalBody').html(data);
-        })
-        .fail(function() {
-            $('#quickSetupModalBody').html('<div class="alert alert-danger">Błąd ładowania formularza</div>');
-        });
-}
-
-function saveQuickSetup(parameterId) {
-    const formData = $('#quickSetupForm').serialize();
-    
-    $.post('<?= yii\helpers\Url::to(['quick-setup-warning', 'id' => $model->id]) ?>', formData + '&parameterId=' + parameterId)
-        .done(function(response) {
-            if (response.success) {
-                $('#quickSetupModal').modal('hide');
-                location.reload(); // Odśwież stronę aby pokazać zmiany
-            } else {
-                alert('Błąd: ' + response.message);
-            }
-        })
-        .fail(function() {
-            alert('Błąd komunikacji z serwerem');
-        });
-}
-</script>
-
 <style>
 .stat-box {
-    padding: 10px;
+    text-align: center;
 }
 
 .stat-number {
@@ -367,15 +270,11 @@ function saveQuickSetup(parameterId) {
 }
 
 .parameter-item {
-    background-color: rgba(255, 193, 7, 0.1);
+    transition: all 0.2s;
 }
 
-.table th {
-    font-size: 0.9rem;
+.parameter-item:hover {
     background-color: #f8f9fa;
-}
-
-.table td {
-    vertical-align: middle;
+    border-color: #007bff !important;
 }
 </style>

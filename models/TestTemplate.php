@@ -102,13 +102,22 @@ class TestTemplate extends ActiveRecord {
             'coverage_percent' => 0
         ];
 
+        // Załaduj parametry z relacjami, aby uniknąć problemów z lazy loading
+        $parameters = $this->getParameters()->with('norms')->all();
+        
+        if (empty($parameters)) {
+            return $stats;
+        }
+
         $thresholdManager = new \app\components\MedicalThresholdManager();
 
-        foreach ($this->parameters as $parameter) {
+        foreach ($parameters as $parameter) {
             $stats['total_parameters']++;
 
             $hasWarnings = false;
-            foreach ($parameter->norms as $norm) {
+            $norms = $parameter->norms ?? [];
+            
+            foreach ($norms as $norm) {
                 if ($norm->warning_enabled) {
                     $hasWarnings = true;
                     break;
@@ -121,14 +130,21 @@ class TestTemplate extends ActiveRecord {
                 $stats['warnings_disabled']++;
             }
 
-            // Sprawdź czy to parametr krytyczny
-            if ($thresholdManager->getParameterCategory($parameter->name) === 'critical') {
-                $stats['critical_parameters']++;
+            // Sprawdź czy to parametr krytyczny (tylko jeśli MedicalThresholdManager istnieje)
+            try {
+                if (method_exists($thresholdManager, 'getParameterCategory') && 
+                    $thresholdManager->getParameterCategory($parameter->name) === 'critical') {
+                    $stats['critical_parameters']++;
+                }
+            } catch (\Exception $e) {
+                // Jeśli wystąpi błąd z MedicalThresholdManager, po prostu kontynuuj
             }
         }
 
-        // Upewnij się, że coverage_percent jest liczbą całkowitą
-        $stats['coverage_percent'] = $stats['total_parameters'] > 0 ? (int) round(($stats['warnings_enabled'] / $stats['total_parameters']) * 100) : 0;
+        // Oblicz procent pokrycia
+        if ($stats['total_parameters'] > 0) {
+            $stats['coverage_percent'] = (int) round(($stats['warnings_enabled'] / $stats['total_parameters']) * 100);
+        }
 
         return $stats;
     }
@@ -147,9 +163,14 @@ class TestTemplate extends ActiveRecord {
     public function getParametersWithoutWarnings() {
         $parametersWithoutWarnings = [];
 
-        foreach ($this->parameters as $parameter) {
+        // Załaduj parametry z normami
+        $parameters = $this->getParameters()->with('norms')->all();
+
+        foreach ($parameters as $parameter) {
             $hasWarnings = false;
-            foreach ($parameter->norms as $norm) {
+            $norms = $parameter->norms ?? [];
+            
+            foreach ($norms as $norm) {
                 if ($norm->warning_enabled) {
                     $hasWarnings = true;
                     break;
@@ -175,10 +196,14 @@ class TestTemplate extends ActiveRecord {
 
         $success = true;
 
-        foreach ($this->parameters as $targetParameter) {
+        // Załaduj parametry z normami dla obu szablonów
+        $targetParameters = $this->getParameters()->with('norms')->all();
+        $sourceParameters = $sourceTemplate->getParameters()->with('norms')->all();
+
+        foreach ($targetParameters as $targetParameter) {
             // Znajdź odpowiadający parametr w źródłowym szablonie
             $sourceParameter = null;
-            foreach ($sourceTemplate->parameters as $param) {
+            foreach ($sourceParameters as $param) {
                 if ($param->name === $targetParameter->name) {
                     $sourceParameter = $param;
                     break;
@@ -207,5 +232,4 @@ class TestTemplate extends ActiveRecord {
 
         return $success;
     }
-
 }

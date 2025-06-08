@@ -11,6 +11,7 @@ use app\models\TestTemplate;
 use app\models\TestParameter;
 use app\models\ParameterNorm;
 use app\models\search\TestTemplateSearch;
+use app\components\MedicalThresholdManager;
 
 class TestTemplateController extends Controller {
 
@@ -29,13 +30,12 @@ class TestTemplateController extends Controller {
     }
 
     public function actionIndex() {
-        // Dodany searchModel dla zgodności z widokiem
         $searchModel = new TestTemplateSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
-                    'searchModel' => $searchModel,
-                    'dataProvider' => $dataProvider,
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
         ]);
     }
 
@@ -43,7 +43,7 @@ class TestTemplateController extends Controller {
         $model = $this->findModel($id);
 
         return $this->render('view', [
-                    'model' => $model,
+            'model' => $model,
         ]);
     }
 
@@ -56,7 +56,7 @@ class TestTemplateController extends Controller {
         }
 
         return $this->render('create', [
-                    'model' => $model,
+            'model' => $model,
         ]);
     }
 
@@ -69,7 +69,7 @@ class TestTemplateController extends Controller {
         }
 
         return $this->render('update', [
-                    'model' => $model,
+            'model' => $model,
         ]);
     }
 
@@ -91,8 +91,8 @@ class TestTemplateController extends Controller {
         }
 
         return $this->render('add-parameter', [
-                    'template' => $template,
-                    'parameter' => $parameter,
+            'template' => $template,
+            'parameter' => $parameter,
         ]);
     }
 
@@ -110,9 +110,16 @@ class TestTemplateController extends Controller {
         }
 
         return $this->render('update-parameter', [
-                    'template' => $template,
-                    'parameter' => $parameter,
+            'template' => $template,
+            'parameter' => $parameter,
         ]);
+    }
+
+    /**
+     * Alias dla actionUpdateParameter - dla kompatybilności z routingiem
+     */
+    public function actionEditParameter($id, $parameterId) {
+        return $this->actionUpdateParameter($id, $parameterId);
     }
 
     public function actionDeleteParameter($id, $parameterId) {
@@ -129,9 +136,22 @@ class TestTemplateController extends Controller {
         return $this->redirect(['view', 'id' => $template->id]);
     }
 
-    public function actionAddNorm($id, $parameterId) {
-        error_log("ADD NORM ACTION CALLED - Template ID: $id, Parameter ID: $parameterId");
+    public function actionReorderParameters() {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
+        $orders = Yii::$app->request->post('orders', []);
+
+        foreach ($orders as $order) {
+            TestParameter::updateAll(
+                ['order_index' => $order['order']],
+                ['id' => $order['id']]
+            );
+        }
+
+        return ['success' => true];
+    }
+
+    public function actionAddNorm($id, $parameterId) {
         $template = $this->findModel($id);
         $parameter = TestParameter::findOne($parameterId);
 
@@ -142,12 +162,7 @@ class TestTemplateController extends Controller {
         $norm = new ParameterNorm();
         $norm->parameter_id = $parameter->id;
 
-        error_log("POST data: " . json_encode(Yii::$app->request->post()));
-
         if ($norm->load(Yii::$app->request->post())) {
-            error_log("Norm loaded successfully");
-            error_log("Norm data: " . json_encode($norm->attributes));
-
             // Handle multiple thresholds
             if ($norm->type === 'multiple_thresholds') {
                 $thresholdValues = Yii::$app->request->post('threshold_value', []);
@@ -173,49 +188,21 @@ class TestTemplateController extends Controller {
                 });
 
                 $norm->thresholds_config = json_encode($thresholds);
-                error_log("Thresholds config: " . $norm->thresholds_config);
             }
 
-            // Validate before save
-            if ($norm->validate()) {
-                error_log("Validation passed");
-                if ($norm->save()) {
-                    error_log("Norm saved successfully with ID: " . $norm->id);
-                    Yii::$app->session->setFlash('success', 'Norma została dodana.');
-                    return $this->redirect(['view', 'id' => $template->id]);
-                } else {
-                    error_log("Save failed");
-                    Yii::$app->session->setFlash('error', 'Błąd zapisywania normy w bazie danych.');
-                }
+            if ($norm->save()) {
+                Yii::$app->session->setFlash('success', 'Norma została dodana.');
+                return $this->redirect(['view', 'id' => $template->id]);
             } else {
-                error_log("Validation failed");
-                error_log("Validation errors: " . json_encode($norm->getErrors()));
-                Yii::$app->session->setFlash('error', 'Błąd walidacji: ' . implode(', ', $norm->getFirstErrors()));
+                Yii::$app->session->setFlash('error', 'Błąd zapisywania normy: ' . implode(', ', $norm->getFirstErrors()));
             }
-        } else {
-            error_log("Norm NOT loaded from POST");
         }
 
         return $this->render('add-norm', [
-                    'template' => $template,
-                    'parameter' => $parameter,
-                    'norm' => $norm,
+            'template' => $template,
+            'parameter' => $parameter,
+            'norm' => $norm,
         ]);
-    }
-
-    public function actionReorderParameters() {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        $orders = Yii::$app->request->post('orders', []);
-
-        foreach ($orders as $order) {
-            TestParameter::updateAll(
-                    ['order_index' => $order['order']],
-                    ['id' => $order['id']]
-            );
-        }
-
-        return ['success' => true];
     }
 
     public function actionUpdateNorm($id, $parameterId, $normId) {
@@ -263,15 +250,14 @@ class TestTemplateController extends Controller {
                 Yii::$app->session->setFlash('success', 'Norma została zaktualizowana.');
                 return $this->redirect(['view', 'id' => $template->id]);
             } else {
-                // Debug - wyświetl błędy walidacji
                 Yii::$app->session->setFlash('error', 'Błąd zapisywania normy: ' . implode(', ', $norm->getFirstErrors()));
             }
         }
 
         return $this->render('update-norm', [
-                    'template' => $template,
-                    'parameter' => $parameter,
-                    'norm' => $norm,
+            'template' => $template,
+            'parameter' => $parameter,
+            'norm' => $norm,
         ]);
     }
 
@@ -294,12 +280,135 @@ class TestTemplateController extends Controller {
         return $this->redirect(['view', 'id' => $template->id]);
     }
 
-    protected function findModel($id) {
-        if (($model = TestTemplate::findOne($id)) !== null) {
-            return $model;
+    /**
+     * Pobieranie norm parametru dla modalu
+     */
+    public function actionGetParameterNorms($id, $parameterId) {
+        $template = $this->findModel($id);
+        $parameter = TestParameter::findOne($parameterId);
+
+        if (!$parameter || $parameter->test_template_id != $id) {
+            throw new NotFoundHttpException('Parametr nie został znaleziony.');
         }
 
-        throw new NotFoundHttpException('Szablon badania nie został znaleziony.');
+        $norms = $parameter->norms;
+
+        return $this->renderPartial('_norms_modal_content', [
+            'template' => $template,
+            'parameter' => $parameter,
+            'norms' => $norms,
+        ]);
+    }
+
+    /**
+     * Włączanie ostrzeżeń dla normy (AJAX)
+     */
+    public function actionEnableNormWarnings() {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $templateId = Yii::$app->request->post('id');
+        $parameterId = Yii::$app->request->post('parameterId');
+        $normId = Yii::$app->request->post('normId');
+
+        $template = $this->findModel($templateId);
+        $parameter = TestParameter::findOne($parameterId);
+        $norm = ParameterNorm::findOne($normId);
+
+        if (!$parameter || $parameter->test_template_id != $templateId) {
+            return ['success' => false, 'message' => 'Parametr nie został znaleziony.'];
+        }
+
+        if (!$norm || $norm->parameter_id != $parameterId) {
+            return ['success' => false, 'message' => 'Norma nie została znaleziona.'];
+        }
+
+        $norm->warning_enabled = true;
+        
+        // Ustaw domyślne marginesy jeśli nie są ustawione
+        if (!$norm->warning_margin_percent) {
+            $norm->warning_margin_percent = 10;
+        }
+        if (!$norm->caution_margin_percent) {
+            $norm->caution_margin_percent = 5;
+        }
+
+        if ($norm->save()) {
+            return ['success' => true, 'message' => 'Ostrzeżenia zostały włączone.'];
+        } else {
+            return ['success' => false, 'message' => 'Błąd podczas zapisywania: ' . implode(', ', $norm->getFirstErrors())];
+        }
+    }
+
+    /**
+     * Usuwanie normy (AJAX) - nowa implementacja
+     */
+    public function actionDeleteNormAjax() {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $templateId = Yii::$app->request->post('id');
+        $parameterId = Yii::$app->request->post('parameterId');
+        $normId = Yii::$app->request->post('normId');
+
+        $template = $this->findModel($templateId);
+        $parameter = TestParameter::findOne($parameterId);
+        $norm = ParameterNorm::findOne($normId);
+
+        if (!$parameter || $parameter->test_template_id != $templateId) {
+            return ['success' => false, 'message' => 'Parametr nie został znaleziony.'];
+        }
+
+        if (!$norm || $norm->parameter_id != $parameterId) {
+            return ['success' => false, 'message' => 'Norma nie została znaleziona.'];
+        }
+
+        if ($norm->delete()) {
+            return ['success' => true, 'message' => 'Norma została usunięta.'];
+        } else {
+            return ['success' => false, 'message' => 'Błąd podczas usuwania normy.'];
+        }
+    }
+
+    /**
+     * Szybkie włączenie ostrzeżeń dla pojedynczego parametru
+     */
+    public function actionQuickEnableWarning($id, $parameterId) {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $template = $this->findModel($id);
+        $parameter = TestParameter::findOne($parameterId);
+
+        if (!$parameter || $parameter->test_template_id != $id) {
+            return ['success' => false, 'message' => 'Parametr nie został znaleziony.'];
+        }
+
+        $norms = $parameter->norms;
+        if (empty($norms)) {
+            return ['success' => false, 'message' => 'Parametr nie ma skonfigurowanych norm.'];
+        }
+
+        $updated = 0;
+        foreach ($norms as $norm) {
+            if (!$norm->warning_enabled) {
+                $norm->warning_enabled = true;
+                // Ustaw domyślne marginesy jeśli nie są ustawione
+                if (!$norm->warning_margin_percent) {
+                    $norm->warning_margin_percent = 10; // 10% domyślny margines ostrzeżenia
+                }
+                if (!$norm->caution_margin_percent) {
+                    $norm->caution_margin_percent = 5; // 5% domyślny margines uwagi
+                }
+                
+                if ($norm->save()) {
+                    $updated++;
+                }
+            }
+        }
+
+        if ($updated > 0) {
+            return ['success' => true, 'message' => "Włączono ostrzeżenia dla $updated norm."];
+        } else {
+            return ['success' => false, 'message' => 'Ostrzeżenia były już włączone.'];
+        }
     }
 
     /**
@@ -316,8 +425,6 @@ class TestTemplateController extends Controller {
                 // Automatyczna konfiguracja
                 $options = [
                     'preset' => $postData['preset'] ?? 'standard',
-                    'patient_age' => $postData['patient_age'] ?? null,
-                    'conditions' => $postData['conditions'] ?? []
                 ];
 
                 if ($model->setupWarningsForAllParameters($options)) {
@@ -328,34 +435,17 @@ class TestTemplateController extends Controller {
 
                 return $this->redirect(['view', 'id' => $model->id]);
             }
-
-            if (isset($postData['clone_from'])) {
-                // Klonowanie z innego szablonu
-                $sourceTemplateId = $postData['source_template_id'];
-                if ($model->cloneWarningsFromTemplate($sourceTemplateId)) {
-                    Yii::$app->session->setFlash('success', 'Konfiguracja ostrzeżeń została skopiowana.');
-                } else {
-                    Yii::$app->session->setFlash('error', 'Wystąpił błąd podczas kopiowania konfiguracji.');
-                }
-
-                return $this->redirect(['view', 'id' => $model->id]);
-            }
         }
 
         $stats = $model->getWarningsStatistics();
         $parametersWithoutWarnings = $model->getParametersWithoutWarnings();
         $presets = $thresholdManager->getPresetOptions();
-        $otherTemplates = TestTemplate::find()
-                ->where(['!=', 'id', $id])
-                ->orderBy('name')
-                ->all();
 
         return $this->render('configure-warnings', [
-                    'model' => $model,
-                    'stats' => $stats,
-                    'parametersWithoutWarnings' => $parametersWithoutWarnings,
-                    'presets' => $presets,
-                    'otherTemplates' => $otherTemplates,
+            'model' => $model,
+            'stats' => $stats,
+            'parametersWithoutWarnings' => $parametersWithoutWarnings,
+            'presets' => $presets,
         ]);
     }
 
@@ -377,9 +467,9 @@ class TestTemplateController extends Controller {
             if ($norm) {
                 $thresholdManager = new MedicalThresholdManager();
                 $margins = $thresholdManager->getParameterMargins(
-                        $parameter->name,
-                        $postData['patient_age'] ?? null,
-                        $postData['conditions'] ?? []
+                    $parameter->name,
+                    $postData['patient_age'] ?? null,
+                    $postData['conditions'] ?? []
                 );
 
                 $norm->warning_enabled = true;
@@ -387,196 +477,47 @@ class TestTemplateController extends Controller {
                 $norm->caution_margin_percent = $margins['caution_percent'];
 
                 if ($norm->save()) {
-                    return $this->asJson(['success' => true, 'message' => 'Ostrzeżenia skonfigurowane']);
-                }
-            }
-
-            return $this->asJson(['success' => false, 'message' => 'Błąd konfiguracji']);
-        }
-
-        return $this->renderAjax('_quick_warning_setup', [
-                    'parameter' => $parameter,
-                    'template' => $template
-        ]);
-    }
-
-    /**
-     * Szybkie włączenie ostrzeżeń dla parametru
-     */
-    public function actionQuickEnableWarning($id) {
-        $template = $this->findModel($id);
-
-        if (Yii::$app->request->isPost) {
-            $parameterId = Yii::$app->request->post('parameterId');
-            $parameter = TestParameter::findOne($parameterId);
-
-            if (!$parameter || $parameter->test_template_id != $id) {
-                return $this->asJson(['success' => false, 'message' => 'Parametr nie został znaleziony']);
-            }
-
-            $norm = $parameter->primaryNorm;
-            if ($norm) {
-                // Użyj MedicalThresholdManager do automatycznego ustawienia marginesów
-                if ($norm->autoSetMargins()) {
-                    if ($norm->save()) {
-                        return $this->asJson(['success' => true, 'message' => 'Ostrzeżenia zostały włączone']);
-                    }
-                }
-            }
-
-            return $this->asJson(['success' => false, 'message' => 'Nie udało się włączyć ostrzeżeń']);
-        }
-
-        return $this->asJson(['success' => false, 'message' => 'Nieprawidłowe żądanie']);
-    }
-
-    /**
-     * Pobiera sugerowane marginesy dla parametru na podstawie kontekstu
-     */
-    public function actionGetSuggestedMargins() {
-        if (Yii::$app->request->isPost) {
-            $parameterName = Yii::$app->request->post('parameterName');
-            $age = Yii::$app->request->post('age');
-            $conditions = Yii::$app->request->post('conditions', []);
-
-            $thresholdManager = new \app\components\MedicalThresholdManager();
-            $margins = $thresholdManager->getParameterMargins($parameterName, $age, $conditions);
-
-            return $this->asJson([
-                        'success' => true,
-                        'margins' => $margins
-            ]);
-        }
-
-        return $this->asJson(['success' => false, 'message' => 'Nieprawidłowe żądanie']);
-    }
-
-    /**
-     * Eksport konfiguracji ostrzeżeń szablonu
-     */
-    public function actionExportWarningsConfig($id) {
-        $template = $this->findModel($id);
-
-        $config = [
-            'template_name' => $template->name,
-            'template_id' => $template->id,
-            'export_date' => date('Y-m-d H:i:s'),
-            'parameters' => []
-        ];
-
-        foreach ($template->parameters as $parameter) {
-            if ($parameter->primaryNorm && $parameter->primaryNorm->warning_enabled) {
-                $norm = $parameter->primaryNorm;
-                $config['parameters'][] = [
-                    'name' => $parameter->name,
-                    'unit' => $parameter->unit,
-                    'type' => $parameter->type,
-                    'norm_type' => $norm->type,
-                    'min_value' => $norm->min_value,
-                    'max_value' => $norm->max_value,
-                    'threshold_value' => $norm->threshold_value,
-                    'threshold_direction' => $norm->threshold_direction,
-                    'warning_enabled' => $norm->warning_enabled,
-                    'warning_margin_percent' => $norm->warning_margin_percent,
-                    'warning_margin_absolute' => $norm->warning_margin_absolute,
-                    'caution_margin_percent' => $norm->caution_margin_percent,
-                    'caution_margin_absolute' => $norm->caution_margin_absolute,
-                    'optimal_min_value' => $norm->optimal_min_value,
-                    'optimal_max_value' => $norm->optimal_max_value,
-                ];
-            }
-        }
-
-        $filename = "warnings_config_{$template->name}_" . date('Y-m-d') . ".json";
-
-        Yii::$app->response->headers->set('Content-Type', 'application/json');
-        Yii::$app->response->headers->set('Content-Disposition', "attachment; filename=\"$filename\"");
-
-        return json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    }
-
-    /**
-     * Import konfiguracji ostrzeżeń
-     */
-    public function actionImportWarningsConfig($id) {
-        $template = $this->findModel($id);
-
-        if (Yii::$app->request->isPost) {
-            $uploadedFile = \yii\web\UploadedFile::getInstanceByName('config_file');
-
-            if ($uploadedFile && $uploadedFile->extension === 'json') {
-                $configContent = file_get_contents($uploadedFile->tempName);
-                $config = json_decode($configContent, true);
-
-                if ($config && isset($config['parameters'])) {
-                    $imported = 0;
-                    $skipped = 0;
-
-                    foreach ($config['parameters'] as $paramConfig) {
-                        // Znajdź odpowiadający parametr w bieżącym szablonie
-                        $parameter = null;
-                        foreach ($template->parameters as $p) {
-                            if ($p->name === $paramConfig['name']) {
-                                $parameter = $p;
-                                break;
-                            }
-                        }
-
-                        if ($parameter && $parameter->primaryNorm) {
-                            $norm = $parameter->primaryNorm;
-
-                            // Importuj ustawienia ostrzeżeń
-                            $norm->warning_enabled = $paramConfig['warning_enabled'] ?? true;
-                            $norm->warning_margin_percent = $paramConfig['warning_margin_percent'] ?? null;
-                            $norm->warning_margin_absolute = $paramConfig['warning_margin_absolute'] ?? null;
-                            $norm->caution_margin_percent = $paramConfig['caution_margin_percent'] ?? null;
-                            $norm->caution_margin_absolute = $paramConfig['caution_margin_absolute'] ?? null;
-                            $norm->optimal_min_value = $paramConfig['optimal_min_value'] ?? null;
-                            $norm->optimal_max_value = $paramConfig['optimal_max_value'] ?? null;
-
-                            if ($norm->save()) {
-                                $imported++;
-                            } else {
-                                $skipped++;
-                            }
-                        } else {
-                            $skipped++;
-                        }
-                    }
-
-                    Yii::$app->session->setFlash('success',
-                            "Import zakończony. Zaimportowano: $imported, pominięto: $skipped parametrów.");
+                    Yii::$app->session->setFlash('success', 'Ostrzeżenia zostały skonfigurowane dla parametru.');
                 } else {
-                    Yii::$app->session->setFlash('error', 'Nieprawidłowy format pliku konfiguracji.');
+                    Yii::$app->session->setFlash('error', 'Błąd podczas konfiguracji ostrzeżeń.');
                 }
-            } else {
-                Yii::$app->session->setFlash('error', 'Proszę wybrać prawidłowy plik JSON.');
             }
 
-            return $this->redirect(['view', 'id' => $id]);
+            return $this->redirect(['view', 'id' => $template->id]);
         }
 
-        return $this->render('import-warnings-config', [
-                    'model' => $template
+        $thresholdManager = new MedicalThresholdManager();
+        $suggestedMargins = $thresholdManager->getParameterMargins($parameter->name);
+
+        return $this->render('quick-warning-setup', [
+            'template' => $template,
+            'parameter' => $parameter,
+            'suggestedMargins' => $suggestedMargins,
         ]);
     }
 
     /**
-     * Podgląd raportów ostrzeżeń dla szablonu
+     * Raport ostrzeżeń dla szablonu
      */
     public function actionWarningsReport($id) {
         $template = $this->findModel($id);
-        $dateFrom = Yii::$app->request->get('date_from', date('Y-m-d', strtotime('-30 days')));
-        $dateTo = Yii::$app->request->get('date_to', date('Y-m-d'));
+        
+        $dateFrom = Yii::$app->request->get('date_from');
+        $dateTo = Yii::$app->request->get('date_to');
 
-        // Pobierz wyniki z ostatnich 30 dni (lub z wybranego zakresu)
-        $results = \app\models\TestResult::find()
-                ->where(['test_template_id' => $id])
-                ->andWhere(['between', 'test_date', $dateFrom, $dateTo])
-                ->orderBy(['test_date' => SORT_DESC])
-                ->all();
+        if (!$dateFrom) {
+            $dateFrom = date('Y-m-01'); // Pierwszy dzień bieżącego miesiąca
+        }
+        if (!$dateTo) {
+            $dateTo = date('Y-m-d'); // Dzisiaj
+        }
 
-        // Przygotuj statystyki ostrzeżeń
+        $results = $template->getResults()
+            ->where(['between', 'test_date', $dateFrom, $dateTo])
+            ->with(['resultValues.parameter', 'resultValues.norm'])
+            ->orderBy('test_date DESC')
+            ->all();
+
         $warningsStats = [
             'total_results' => count($results),
             'results_with_warnings' => 0,
@@ -588,10 +529,10 @@ class TestTemplateController extends Controller {
 
         foreach ($results as $result) {
             $hasWarnings = false;
-
+            
             foreach ($result->resultValues as $value) {
                 $paramName = $value->parameter->name;
-
+                
                 if (!isset($warningsStats['parameter_stats'][$paramName])) {
                     $warningsStats['parameter_stats'][$paramName] = [
                         'total' => 0,
@@ -627,11 +568,11 @@ class TestTemplateController extends Controller {
         }
 
         return $this->render('warnings-report', [
-                    'model' => $template,
-                    'results' => $results,
-                    'warningsStats' => $warningsStats,
-                    'dateFrom' => $dateFrom,
-                    'dateTo' => $dateTo
+            'model' => $template,
+            'results' => $results,
+            'warningsStats' => $warningsStats,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo
         ]);
     }
 
@@ -642,8 +583,6 @@ class TestTemplateController extends Controller {
         if (Yii::$app->request->isPost) {
             $templateIds = Yii::$app->request->post('template_ids', []);
             $preset = Yii::$app->request->post('preset', 'standard');
-            $patientAge = Yii::$app->request->post('patient_age');
-            $conditions = Yii::$app->request->post('conditions', []);
 
             $success = 0;
             $failed = 0;
@@ -653,8 +592,6 @@ class TestTemplateController extends Controller {
                 if ($template) {
                     $options = [
                         'preset' => $preset,
-                        'patient_age' => $patientAge,
-                        'conditions' => $conditions
                     ];
 
                     if ($template->setupWarningsForAllParameters($options)) {
@@ -666,19 +603,26 @@ class TestTemplateController extends Controller {
             }
 
             Yii::$app->session->setFlash('success',
-                    "Konfiguracja batch zakończona. Skonfigurowano: $success, błędy: $failed szablonów.");
+                "Konfiguracja batch zakończona. Skonfigurowano: $success, błędy: $failed szablonów.");
 
             return $this->redirect(['index']);
         }
 
         $templates = TestTemplate::find()->orderBy('name')->all();
-        $thresholdManager = new \app\components\MedicalThresholdManager();
+        $thresholdManager = new MedicalThresholdManager();
         $presets = $thresholdManager->getPresetOptions();
 
         return $this->render('batch-configure-warnings', [
-                    'templates' => $templates,
-                    'presets' => $presets
+            'templates' => $templates,
+            'presets' => $presets
         ]);
     }
 
+    protected function findModel($id) {
+        if (($model = TestTemplate::findOne($id)) !== null) {
+            return $model;
+        }
+
+        throw new NotFoundHttpException('Szablon badania nie został znaleziony.');
+    }
 }
