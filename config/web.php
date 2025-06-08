@@ -27,8 +27,17 @@ $config = [
             'errorAction' => 'site/error',
         ],
         'mailer' => [
-            'class' => 'yii\swiftmailer\Mailer',
-            'useFileTransport' => true,
+            'class' => \yii\symfonymailer\Mailer::class,
+            'viewPath' => '@app/mail',
+            'useFileTransport' => false,
+            'transport' => [
+                'scheme' => 'smtp',
+                'host' => $_ENV['MAIL_HOST'] ?? 'smtp.gmail.com',
+                'username' => $_ENV['MAIL_USERNAME'] ?? '',
+                'password' => $_ENV['MAIL_PASSWORD'] ?? '',
+                'port' => (int)($_ENV['MAIL_PORT'] ?? 587),
+                'encryption' => $_ENV['MAIL_ENCRYPTION'] ?? 'tls',
+            ],
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
