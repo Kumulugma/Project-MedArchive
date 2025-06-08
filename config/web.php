@@ -10,7 +10,7 @@ $config = [
     'bootstrap' => ['log'],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
-        '@npm' => '@vendor/npm-asset',
+        '@npm'   => '@vendor/npm-asset',
     ],
     // Konfiguracja języka polskiego
     'language' => 'pl-PL',
@@ -18,7 +18,6 @@ $config = [
     'timeZone' => 'Europe/Warsaw',
     'components' => [
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'your-secret-key-here',
         ],
         'cache' => [
@@ -32,9 +31,7 @@ $config = [
             'errorAction' => 'site/error',
         ],
         'mailer' => [
-            'class' => \yii\symfonymailer\Mailer::class,
-            'viewPath' => '@app/mail',
-            // send all mails to a file by default.
+            'class' => 'yii\swiftmailer\Mailer',
             'useFileTransport' => true,
             'messageClass' => 'yii\symfonymailer\Message'
         ],
@@ -113,8 +110,6 @@ $config = [
                 'settings' => 'user/settings',
                 'login-history' => 'user/login-history',
                 'change-password' => 'user/change-password',
-                'logout-all' => 'user/logout-all',
-                'export-login-history' => 'user/export-login-history',
                 // Domyślne trasy
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',

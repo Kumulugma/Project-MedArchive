@@ -1,9 +1,13 @@
 <?php
+
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
+/* @var $this yii\web\View */
+/* @var $model app\models\ChangePasswordForm */
+
 $this->title = 'Zmiana hasła';
-$this->params['breadcrumbs'][] = ['label' => 'Profil', 'url' => ['profile']];
+$this->params['breadcrumbs'][] = ['label' => 'Ustawienia', 'url' => ['settings']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
@@ -12,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
             <h1 class="h2"><?= Html::encode($this->title) ?></h1>
             <div class="btn-toolbar mb-2 mb-md-0">
-                <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do profilu', ['profile'], ['class' => 'btn btn-outline-secondary']) ?>
+                <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do ustawień', ['settings'], ['class' => 'btn btn-outline-secondary']) ?>
             </div>
         </div>
     </div>
@@ -22,56 +26,61 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-key"></i> Zmień hasło
+                        <i class="fas fa-key text-warning"></i> 
+                        Zmiana hasła
                     </h5>
                 </div>
                 <div class="card-body">
                     <?php $form = ActiveForm::begin([
                         'id' => 'change-password-form',
                         'options' => ['class' => 'needs-validation', 'novalidate' => true],
+                        'fieldConfig' => [
+                            'template' => "{label}\n{input}\n{error}",
+                            'labelOptions' => ['class' => 'form-label'],
+                            'inputOptions' => ['class' => 'form-control'],
+                            'errorOptions' => ['class' => 'invalid-feedback d-block'],
+                        ],
                     ]); ?>
 
-                    <div class="form-group mb-3">
-                        <?= Html::label('Obecne hasło', 'current-password', ['class' => 'form-label']) ?>
-                        <?= Html::passwordInput('current_password', '', [
-                            'class' => 'form-control',
-                            'id' => 'current-password',
+                    <div class="mb-3">
+                        <?= $form->field($model, 'currentPassword')->passwordInput([
+                            'maxlength' => true,
+                            'placeholder' => 'Wprowadź aktualne hasło',
                             'required' => true,
-                            'placeholder' => 'Wprowadź obecne hasło'
+                            'id' => 'current-password'
                         ]) ?>
-                        <div class="invalid-feedback">
-                            Proszę wprowadzić obecne hasło.
-                        </div>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Potwierdź swoją tożsamość wprowadzając aktualne hasło
+                        </small>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <?= Html::label('Nowe hasło', 'new-password', ['class' => 'form-label']) ?>
-                        <?= Html::passwordInput('new_password', '', [
-                            'class' => 'form-control',
+                    <div class="mb-3">
+                        <?= $form->field($model, 'newPassword')->passwordInput([
+                            'maxlength' => true,
+                            'placeholder' => 'Wprowadź nowe hasło (min. 6 znaków)',
+                            'required' => true,
                             'id' => 'new-password',
-                            'required' => true,
-                            'minlength' => 8,
-                            'placeholder' => 'Wprowadź nowe hasło (min. 8 znaków)'
+                            'pattern' => '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$'
                         ]) ?>
-                        <div class="invalid-feedback">
-                            Nowe hasło musi mieć co najmniej 8 znaków.
-                        </div>
-                        <div class="form-text">
-                            Hasło powinno zawierać co najmniej 8 znaków, w tym wielkie i małe litery oraz cyfry.
+                        <div class="password-requirements mt-2">
+                            <small class="text-muted">Hasło musi zawierać:</small>
+                            <ul class="list-unstyled small text-muted">
+                                <li><i class="fas fa-check text-success"></i> Co najmniej 6 znaków</li>
+                                <li><i class="fas fa-check text-success"></i> Jedną małą literę (a-z)</li>
+                                <li><i class="fas fa-check text-success"></i> Jedną wielką literę (A-Z)</li>
+                                <li><i class="fas fa-check text-success"></i> Jedną cyfrę (0-9)</li>
+                            </ul>
                         </div>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <?= Html::label('Potwierdź nowe hasło', 'confirm-password', ['class' => 'form-label']) ?>
-                        <?= Html::passwordInput('confirm_password', '', [
-                            'class' => 'form-control',
-                            'id' => 'confirm-password',
+                    <div class="mb-3">
+                        <?= $form->field($model, 'confirmPassword')->passwordInput([
+                            'maxlength' => true,
+                            'placeholder' => 'Potwierdź nowe hasło',
                             'required' => true,
-                            'placeholder' => 'Potwierdź nowe hasło'
+                            'id' => 'confirm-password'
                         ]) ?>
-                        <div class="invalid-feedback">
-                            Hasła muszą być identyczne.
-                        </div>
                     </div>
 
                     <div class="d-grid">
@@ -131,7 +140,45 @@ $this->params['breadcrumbs'][] = $this->title;
         }
     }
     
-    newPassword.addEventListener('input', validatePasswords);
+    // Walidacja siły hasła w czasie rzeczywistym
+    function validatePasswordStrength() {
+        const password = newPassword.value;
+        const requirements = document.querySelectorAll('.password-requirements li i');
+        
+        // Co najmniej 6 znaków
+        if (password.length >= 6) {
+            requirements[0].className = 'fas fa-check text-success';
+        } else {
+            requirements[0].className = 'fas fa-times text-danger';
+        }
+        
+        // Mała litera
+        if (/[a-z]/.test(password)) {
+            requirements[1].className = 'fas fa-check text-success';
+        } else {
+            requirements[1].className = 'fas fa-times text-danger';
+        }
+        
+        // Wielka litera
+        if (/[A-Z]/.test(password)) {
+            requirements[2].className = 'fas fa-check text-success';
+        } else {
+            requirements[2].className = 'fas fa-times text-danger';
+        }
+        
+        // Cyfra
+        if (/\d/.test(password)) {
+            requirements[3].className = 'fas fa-check text-success';
+        } else {
+            requirements[3].className = 'fas fa-times text-danger';
+        }
+    }
+    
+    newPassword.addEventListener('input', function() {
+        validatePasswords();
+        validatePasswordStrength();
+    });
+    
     confirmPassword.addEventListener('input', validatePasswords);
     
     form.addEventListener('submit', function(event) {
@@ -144,3 +191,35 @@ $this->params['breadcrumbs'][] = $this->title;
     });
 })();
 </script>
+
+<style>
+.password-requirements {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border-left: 3px solid #007bff;
+}
+
+.was-validated .form-control:valid {
+    border-color: #28a745;
+}
+
+.was-validated .form-control:invalid {
+    border-color: #dc3545;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+#change-password-btn {
+    padding: 12px;
+    font-weight: 600;
+}
+</style>

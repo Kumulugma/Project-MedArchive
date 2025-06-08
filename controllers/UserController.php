@@ -12,6 +12,7 @@ use app\models\LoginHistory;
 use app\models\TestResult;
 use app\models\TestTemplate;
 use app\models\TestQueue;
+use app\models\ChangePasswordForm;
 
 class UserController extends Controller
 {
@@ -30,7 +31,6 @@ class UserController extends Controller
         ];
     }
 
-    
     /**
      * Historia logowań użytkownika
      */
@@ -92,11 +92,21 @@ class UserController extends Controller
     }
 
     /**
-     * Zmiana hasła
+     * Zmiana hasła - NOWA IMPLEMENTACJA
      */
     public function actionChangePassword()
     {
-        // Implementacja zmiany hasła
-        return $this->render('change-password');
+        $model = new ChangePasswordForm();
+        
+        if ($model->load(Yii::$app->request->post())) {
+            if ($model->validate() && $model->changePassword()) {
+                Yii::$app->session->setFlash('success', 'Hasło zostało pomyślnie zmienione. Możesz teraz korzystać z nowego hasła.');
+                return $this->redirect(['settings']);
+            }
+        }
+
+        return $this->render('change-password', [
+            'model' => $model,
+        ]);
     }
 }

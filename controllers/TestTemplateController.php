@@ -115,12 +115,6 @@ class TestTemplateController extends Controller {
         ]);
     }
 
-    /**
-     * Alias dla actionUpdateParameter - dla kompatybilności z routingiem
-     */
-    public function actionEditParameter($id, $parameterId) {
-        return $this->actionUpdateParameter($id, $parameterId);
-    }
 
     public function actionDeleteParameter($id, $parameterId) {
         $template = $this->findModel($id);

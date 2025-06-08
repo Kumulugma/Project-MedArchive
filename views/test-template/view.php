@@ -83,14 +83,6 @@ if ($warningsStats['coverage_percent'] >= 80) {
                         'attributes' => [
                             'name',
                             'description:ntext',
-                            [
-                                'attribute' => 'status',
-                                'value' => $configurationStatus,
-                                'format' => 'raw',
-                                'contentOptions' => ['class' => $statusClass]
-                            ],
-                            'created_at:datetime',
-                            'updated_at:datetime',
                         ],
                     ]) ?>
                 </div>
