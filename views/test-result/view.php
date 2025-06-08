@@ -1,11 +1,15 @@
 <?php
+
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 use app\assets\TestResultAsset;
 
+/* @var $this yii\web\View */
+/* @var $model app\models\TestResult */
+
 TestResultAsset::register($this);
 
-$this->title = 'Wynik badania: ' . $model->testTemplate->name;
+$this->title = 'Wynik badania #' . $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Wyniki badań', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -17,28 +21,20 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="btn-toolbar mb-2 mb-md-0">
                 <?= Html::a('<i class="fas fa-edit"></i> Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
                 <?= Html::a('<i class="fas fa-chart-line"></i> Porównaj wyniki', ['compare', 'templateId' => $model->test_template_id], ['class' => 'btn btn-info']) ?>
+                <?= Html::a('<i class="fas fa-download"></i> Eksport PDF', ['export', 'id' => $model->id, 'format' => 'pdf'], ['class' => 'btn btn-outline-secondary']) ?>
                 <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do listy', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
-                <?= Html::a('<i class="fas fa-trash"></i> Usuń', ['delete', 'id' => $model->id], [
-                    'class' => 'btn btn-outline-danger',
-                    'data' => [
-                        'confirm' => 'Czy na pewno chcesz usunąć ten wynik badania?',
-                        'method' => 'post',
-                    ],
-                ]) ?>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-6">
             <?= DetailView::widget([
                 'model' => $model,
-                'options' => ['class' => 'table table-striped table-bordered detail-view'],
                 'attributes' => [
-                    'id',
                     [
                         'attribute' => 'testTemplate.name',
-                        'label' => 'Badanie'
+                        'label' => 'Szablon badania',
                     ],
                     'test_date:date',
                     'comment:ntext',
@@ -46,12 +42,15 @@ $this->params['breadcrumbs'][] = $this->title;
                         'attribute' => 'has_abnormal_values',
                         'label' => 'Status ogólny',
                         'format' => 'raw',
-                        'value' => $model->has_abnormal_values 
-                            ? '<span class="badge bg-danger">Nieprawidłowe</span>'
-                            : '<span class="badge bg-success">Prawidłowe</span>',
+                        'value' => function($model) {
+                            $status = $model->getDetailedStatus();
+                            return '<span class="badge ' . $status['badge_class'] . ' fs-6">' .
+                                   '<i class="' . $status['icon'] . '"></i> ' .
+                                   $status['message'] .
+                                   ($status['warning_count'] > 0 && $status['status'] !== 'abnormal' ? ' (' . $status['warning_count'] . ')' : '') .
+                                   '</span>';
+                        },
                     ],
-                    'created_at:datetime',
-                    'updated_at:datetime',
                 ],
             ]) ?>
         </div>
@@ -67,6 +66,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <th>Wartość</th>
                         <th>Norma</th>
                         <th>Status</th>
+                        <th>Ostrzeżenie</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -78,11 +78,32 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <small class="text-muted">(<?= Html::encode($value->parameter->unit) ?>)</small>
                                 <?php endif; ?>
                             </td>
-                            <td class="<?= $value->is_abnormal ? 'text-danger' : 'text-success' ?>">
-                                <strong><?= Html::encode($value->value) ?></strong>
-                                <?php if ($value->parameter->unit): ?>
-                                    <small class="text-muted"><?= Html::encode($value->parameter->unit) ?></small>
-                                <?php endif; ?>
+                            <td>
+                                <?php
+                                // Określ kolor wartości na podstawie statusu
+                                $valueClass = 'text-success'; // default
+                                if ($value->is_abnormal) {
+                                    $valueClass = 'text-danger fw-bold';
+                                } elseif ($value->warning_level) {
+                                    switch ($value->warning_level) {
+                                        case \app\models\ParameterNorm::WARNING_LEVEL_WARNING:
+                                            $valueClass = 'text-warning fw-bold';
+                                            break;
+                                        case \app\models\ParameterNorm::WARNING_LEVEL_CAUTION:
+                                            $valueClass = 'text-info fw-bold';
+                                            break;
+                                        case \app\models\ParameterNorm::WARNING_LEVEL_CRITICAL:
+                                            $valueClass = 'text-danger fw-bold';
+                                            break;
+                                    }
+                                }
+                                ?>
+                                <span class="<?= $valueClass ?>">
+                                    <strong><?= Html::encode($value->value) ?></strong>
+                                    <?php if ($value->parameter->unit): ?>
+                                        <small class="text-muted"><?= Html::encode($value->parameter->unit) ?></small>
+                                    <?php endif; ?>
+                                </span>
                             </td>
                             <td>
                                 <?php if ($value->norm): ?>
@@ -97,71 +118,67 @@ $this->params['breadcrumbs'][] = $this->title;
                                                     break;
                                                 case 'single_threshold':
                                                     echo '<span class="badge bg-warning">Próg</span> ';
-                                                    echo ($value->norm->threshold_direction === 'above' ? '≤ ' : '≥ ') . Html::encode($value->norm->threshold_value);
+                                                    echo ($value->norm->threshold_direction === 'below' ? '≤ ' : '≥ ') . Html::encode($value->norm->threshold_value);
                                                     break;
                                                 case 'positive_negative':
-                                                    echo '<span class="badge bg-secondary">Dodatni/Ujemny</span>';
+                                                    echo '<span class="badge bg-secondary">+/-</span> ';
+                                                    echo 'Negatywny = Normalny';
                                                     break;
                                                 case 'multiple_thresholds':
-                                                    echo '<span class="badge bg-primary">Wielokrotne progi</span>';
-                                                    if ($value->norm->thresholds_config) {
-                                                        $thresholds = json_decode($value->norm->thresholds_config, true);
-                                                        if ($thresholds) {
-                                                            echo '<ul class="list-unstyled mt-1 mb-0">';
-                                                            foreach ($thresholds as $threshold) {
-                                                                $class = $threshold['is_normal'] ? 'text-success' : 'text-danger';
-                                                                echo '<li class="' . $class . '">';
-                                                                echo Html::encode($threshold['value']);
-                                                                if (!empty($threshold['label'])) {
-                                                                    echo ' - ' . Html::encode($threshold['label']);
-                                                                }
-                                                                echo '</li>';
-                                                            }
-                                                            echo '</ul>';
-                                                        }
-                                                    }
+                                                    echo '<span class="badge bg-dark">Progi</span> ';
+                                                    echo 'Wiele progów';
                                                     break;
                                             }
                                             ?>
-                                            <?php if ($value->parameter->unit): ?>
-                                                <small class="text-muted d-block"><?= Html::encode($value->parameter->unit) ?></small>
-                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php else: ?>
-                                    <span class="text-muted">Brak zdefiniowanej normy</span>
+                                    <span class="text-muted">Brak normy</span>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ($value->is_abnormal): ?>
-                                    <span class="badge bg-danger">Nieprawidłowy</span>
-                                    <?php
-                                    // Pokaż szczegóły dlaczego nieprawidłowy
-                                    if ($value->norm) {
-                                        $numericValue = is_numeric($value->value) ? (float)$value->value : null;
-                                        if ($numericValue !== null) {
-                                            switch($value->norm->type) {
-                                                case 'range':
-                                                    if ($numericValue < $value->norm->min_value) {
-                                                        echo '<br><small class="text-muted">Poniżej normy</small>';
-                                                    } elseif ($numericValue > $value->norm->max_value) {
-                                                        echo '<br><small class="text-muted">Powyżej normy</small>';
-                                                    }
-                                                    break;
-                                                case 'single_threshold':
-                                                    if ($value->norm->threshold_direction === 'above' && $numericValue > $value->norm->threshold_value) {
-                                                        echo '<br><small class="text-muted">Powyżej progu</small>';
-                                                    } elseif ($value->norm->threshold_direction === 'below' && $numericValue < $value->norm->threshold_value) {
-                                                        echo '<br><small class="text-muted">Poniżej progu</small>';
-                                                    }
-                                                    break;
-                                            }
-                                        }
+                                <?php
+                                // Określ status główny
+                                if ($value->is_abnormal) {
+                                    echo '<span class="badge bg-danger"><i class="fas fa-times-circle"></i> Nieprawidłowe</span>';
+                                } else {
+                                    echo '<span class="badge bg-success"><i class="fas fa-check-circle"></i> Prawidłowe</span>';
+                                }
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                // Pokaż szczegółowe ostrzeżenie
+                                if ($value->warning_level && $value->warning_level !== \app\models\ParameterNorm::WARNING_LEVEL_NONE) {
+                                    switch ($value->warning_level) {
+                                        case \app\models\ParameterNorm::WARNING_LEVEL_OPTIMAL:
+                                            echo '<span class="badge bg-success"><i class="fas fa-star"></i> Optymalna</span>';
+                                            break;
+                                        case \app\models\ParameterNorm::WARNING_LEVEL_CAUTION:
+                                            echo '<span class="badge bg-info"><i class="fas fa-info-circle"></i> Do obserwacji</span>';
+                                            break;
+                                        case \app\models\ParameterNorm::WARNING_LEVEL_WARNING:
+                                            echo '<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> Ostrzeżenie</span>';
+                                            break;
+                                        case \app\models\ParameterNorm::WARNING_LEVEL_CRITICAL:
+                                            echo '<span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Krytyczne</span>';
+                                            break;
+                                        default:
+                                            echo '<span class="badge bg-light text-dark">-</span>';
                                     }
-                                    ?>
-                                <?php else: ?>
-                                    <span class="badge bg-success">Prawidłowy</span>
-                                <?php endif; ?>
+                                    
+                                    // Pokaż dodatkowe informacje
+                                    if ($value->warning_message) {
+                                        echo '<br><small class="text-muted mt-1">' . Html::encode($value->warning_message) . '</small>';
+                                    }
+                                    
+                                    if ($value->distance_from_boundary && $value->distance_from_boundary > 0) {
+                                        echo '<br><small class="text-muted">Odległość od granicy: ' . round($value->distance_from_boundary, 2) . '</small>';
+                                    }
+                                } else {
+                                    echo '<span class="badge bg-light text-dark">-</span>';
+                                }
+                                ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -169,4 +186,90 @@ $this->params['breadcrumbs'][] = $this->title;
             </table>
         </div>
     </div>
+
+    <!-- Rekomendacje jeśli są ostrzeżenia -->
+    <?php
+    $hasWarnings = false;
+    $recommendations = [];
+    foreach ($model->resultValues as $value) {
+        if ($value->warning_level && in_array($value->warning_level, [
+            \app\models\ParameterNorm::WARNING_LEVEL_WARNING,
+            \app\models\ParameterNorm::WARNING_LEVEL_CAUTION,
+            \app\models\ParameterNorm::WARNING_LEVEL_CRITICAL
+        ])) {
+            $hasWarnings = true;
+            if ($value->recommendation) {
+                $recommendations[] = [
+                    'parameter' => $value->parameter->name,
+                    'recommendation' => $value->recommendation,
+                    'level' => $value->warning_level
+                ];
+            }
+        }
+    }
+    ?>
+
+    <?php if ($hasWarnings): ?>
+        <div class="mt-4">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb"></i> Rekomendacje
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($recommendations)): ?>
+                        <div class="row">
+                            <?php foreach ($recommendations as $rec): ?>
+                                <div class="col-md-6 mb-3">
+                                    <div class="p-3 border rounded">
+                                        <h6 class="text-primary"><?= Html::encode($rec['parameter']) ?></h6>
+                                        <p class="mb-0 small"><?= Html::encode($rec['recommendation']) ?></p>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="mb-0">
+                            <i class="fas fa-info-circle text-info"></i>
+                            Wykryto wartości wymagające uwagi. Zalecana konsultacja z lekarzem w celu interpretacji wyników.
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
 </div>
+
+<!-- CSS dla lepszego wyglądu -->
+<style>
+.badge.fs-6 {
+    font-size: 1rem !important;
+    padding: 0.5rem 0.75rem;
+}
+
+.text-warning {
+    color: #fd7e14 !important;
+}
+
+.text-info {
+    color: #0dcaf0 !important;
+}
+
+.norm-details {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.norm-details .badge {
+    font-size: 0.75rem;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.table .badge {
+    font-size: 0.8rem;
+}
+</style>

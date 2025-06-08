@@ -4,7 +4,7 @@ $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
 
 $config = [
-    'id' => 'basic',
+    'id' => 'medarchive',
     'name' => 'MedArchive',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
@@ -12,10 +12,6 @@ $config = [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
     ],
-    // Konfiguracja języka polskiego
-    'language' => 'pl-PL',
-    'sourceLanguage' => 'en-US',
-    'timeZone' => 'Europe/Warsaw',
     'components' => [
         'request' => [
             'cookieValidationKey' => 'your-secret-key-here',
@@ -33,7 +29,6 @@ $config = [
         'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',
             'useFileTransport' => true,
-            'messageClass' => 'yii\symfonymailer\Message'
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
@@ -45,34 +40,6 @@ $config = [
             ],
         ],
         'db' => $db,
-        // Konfiguracja formattera dla polskich dat
-        'formatter' => [
-            'class' => 'yii\i18n\Formatter',
-            'defaultTimeZone' => 'Europe/Warsaw',
-            'timeZone' => 'Europe/Warsaw',
-            'locale' => 'pl-PL',
-            'dateFormat' => 'php:j F Y', // 11 marca 2025
-            'datetimeFormat' => 'php:j F Y, H:i', // 11 marca 2025, 14:30
-            'timeFormat' => 'php:H:i',
-        ],
-        // Konfiguracja internacjonalizacji (i18n)
-        'i18n' => [
-            'translations' => [
-                'app*' => [
-                    'class' => 'yii\i18n\PhpMessageSource',
-                    'basePath' => '@app/messages',
-                    'sourceLanguage' => 'en-US',
-                    'fileMap' => [
-                        'app' => 'app.php',
-                    ],
-                ],
-                'yii' => [
-                    'class' => 'yii\i18n\PhpMessageSource',
-                    'basePath' => '@app/messages',
-                    'sourceLanguage' => 'en-US',
-                ],
-            ],
-        ],
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
@@ -83,33 +50,70 @@ $config = [
                 'logout' => 'site/logout',
                 'request-password-reset' => 'site/request-password-reset',
                 'reset-password/<token>' => 'site/reset-password',
-                'export/<action>' => 'export/<action>',
-                'export/<action>/<format>' => 'export/<action>',
+                
                 // Dashboard
                 'dashboard' => 'dashboard/index',
-                // Badania
+                
+                // Export
+                'export/<action>' => 'export/<action>',
+                'export/<action>/<format>' => 'export/<action>',
+                
+                // Szablony badań - podstawowe operacje
                 'test-templates' => 'test-template/index',
                 'test-templates/create' => 'test-template/create',
                 'test-templates/<id:\d+>' => 'test-template/view',
                 'test-templates/<id:\d+>/update' => 'test-template/update',
                 'test-templates/<id:\d+>/delete' => 'test-template/delete',
+                
+                // Parametry szablonów
+                'test-templates/<id:\d+>/add-parameter' => 'test-template/add-parameter',
+                'test-templates/<id:\d+>/update-parameter/<parameterId:\d+>' => 'test-template/update-parameter',
+                'test-templates/<id:\d+>/delete-parameter/<parameterId:\d+>' => 'test-template/delete-parameter',
+                
+                // Konfiguracja ostrzeżeń
+                'test-templates/<id:\d+>/configure-warnings' => 'test-template/configure-warnings',
+                'test-templates/<id:\d+>/bulk-enable-warnings' => 'test-template/bulk-enable-warnings',
+                'test-templates/<id:\d+>/quick-enable-warning/<parameterId:\d+>' => 'test-template/quick-enable-warning',
+                
+                // Normy - podstawowe operacje
+                'test-templates/<id:\d+>/add-norm/<parameterId:\d+>' => 'test-template/add-norm',
+                'test-templates/<id:\d+>/update-norm/<parameterId:\d+>/<normId:\d+>' => 'test-template/update-norm',
+                'test-templates/<id:\d+>/delete-norm/<parameterId:\d+>/<normId:\d+>' => 'test-template/delete-norm',
+                
+                // AJAX endpoints dla norm
+                'test-templates/<id:\d+>/get-parameter-norms' => 'test-template/get-parameter-norms',
+                'test-templates/delete-norm-ajax' => 'test-template/delete-norm-ajax',
+                'test-templates/enable-norm-warnings' => 'test-template/enable-norm-warnings',
+                'test-templates/disable-norm-warnings' => 'test-template/disable-norm-warnings',
+                
                 // Wyniki badań
                 'test-results' => 'test-result/index',
                 'test-results/create' => 'test-result/create',
                 'test-results/<id:\d+>' => 'test-result/view',
                 'test-results/<id:\d+>/update' => 'test-result/update',
                 'test-results/<id:\d+>/delete' => 'test-result/delete',
+                'test-results/<id:\d+>/export' => 'test-result/export',
+                'test-results/<id:\d+>/export/<format>' => 'test-result/export',
+                'test-results/compare/<templateId:\d+>' => 'test-result/compare',
+                'test-results/get-chart-data' => 'test-result/get-chart-data',
+                
                 // Kolejka badań
                 'test-queue' => 'test-queue/index',
                 'test-queue/create' => 'test-queue/create',
                 'test-queue/<id:\d+>' => 'test-queue/view',
                 'test-queue/<id:\d+>/update' => 'test-queue/update',
                 'test-queue/<id:\d+>/delete' => 'test-queue/delete',
+                'test-queue/<id:\d+>/process' => 'test-queue/process',
+                
                 // Użytkownik
                 'profile' => 'user/profile',
                 'settings' => 'user/settings',
                 'login-history' => 'user/login-history',
                 'change-password' => 'user/change-password',
+                
+                // API endpoints
+                'api/<controller:\w+>/<action:\w+>' => 'api/<controller>/<action>',
+                
                 // Domyślne trasy
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',
@@ -117,6 +121,14 @@ $config = [
         ],
         'thresholdManager' => [
             'class' => 'app\components\MedicalThresholdManager'
+        ],
+        'formatter' => [
+            'class' => 'yii\i18n\Formatter',
+            'locale' => 'pl-PL',
+            'defaultTimeZone' => 'Europe/Warsaw',
+            'dateFormat' => 'php:j F Y',        // 10 marca 2025
+            'timeFormat' => 'php:H:i',          // 14:30
+            'datetimeFormat' => 'php:j F Y, H:i' // 10 marca 2025, 14:30
         ],
     ],
     'params' => $params,
@@ -127,15 +139,15 @@ if (YII_ENV_DEV) {
     $config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
-            // uncomment the following to add your IP if you are not connecting from localhost.
-            //'allowedIPs' => ['127.0.0.1', '::1'],
+        // uncomment the following to add your IP if you are not connecting from localhost.
+        //'allowedIPs' => ['127.0.0.1', '::1'],
     ];
 
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
-            // uncomment the following to add your IP if you are not connecting from localhost.
-            //'allowedIPs' => ['127.0.0.1', '::1'],
+        // uncomment the following to add your IP if you are not connecting from localhost.
+        //'allowedIPs' => ['127.0.0.1', '::1'],
     ];
 }
 

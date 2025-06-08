@@ -281,6 +281,95 @@ private function getValidationMessage($result)
     }
 }
 
+public function actionDebugNorms($id) {
+    $result = TestResult::findOne($id);
+    if (!$result) {
+        throw new NotFoundHttpException('Wynik nie został znaleziony.');
+    }
+    
+    echo "<h1>Debug norm dla wyniku #$id</h1>";
+    echo "<style>pre { background: #f5f5f5; padding: 10px; border: 1px solid #ddd; margin: 10px 0; }</style>";
+    
+    foreach ($result->resultValues as $resultValue) {
+        echo "<hr><h2>Parametr: " . $resultValue->parameter->name . "</h2>";
+        
+        echo "<pre>";
+        echo "=== INFORMACJE PODSTAWOWE ===\n";
+        echo "Wartość: " . $resultValue->value . "\n";
+        echo "Jednostka: " . ($resultValue->parameter->unit ?: 'brak') . "\n";
+        echo "is_abnormal w bazie: " . ($resultValue->is_abnormal ? 'TRUE' : 'FALSE') . "\n";
+        echo "norm_id: " . ($resultValue->norm_id ?: 'BRAK') . "\n";
+        echo "</pre>";
+        
+        if ($resultValue->norm) {
+            $norm = $resultValue->norm;
+            echo "<pre>";
+            echo "=== INFORMACJE O NORMIE ===\n";
+            echo "Nazwa normy: " . $norm->name . "\n";
+            echo "Typ normy: " . $norm->type . "\n";
+            echo "Is primary: " . ($norm->is_primary ? 'TRUE' : 'FALSE') . "\n";
+            
+            if ($norm->type === 'single_threshold') {
+                echo "Próg: " . $norm->threshold_value . "\n";
+                echo "Kierunek: " . $norm->threshold_direction . "\n";
+                echo "Opis: " . ($norm->threshold_direction === 'below' ? 'Normalny ≤ ' . $norm->threshold_value : 'Normalny ≥ ' . $norm->threshold_value) . "\n";
+            } elseif ($norm->type === 'range') {
+                echo "Min: " . $norm->min_value . "\n";
+                echo "Max: " . $norm->max_value . "\n";
+            }
+            
+            echo "Ostrzeżenia włączone: " . ($norm->warning_enabled ? 'TRUE' : 'FALSE') . "\n";
+            if ($norm->warning_enabled) {
+                echo "Warning margin %: " . ($norm->warning_margin_percent ?: 'brak') . "\n";
+                echo "Caution margin %: " . ($norm->caution_margin_percent ?: 'brak') . "\n";
+            }
+            echo "</pre>";
+            
+            // Test sprawdzania wartości
+            echo "<pre>";
+            echo "=== TEST SPRAWDZANIA WARTOŚCI ===\n";
+            echo "Wartość do sprawdzenia: " . $resultValue->value . "\n";
+            
+            // Test checkValue
+            $basicResult = $norm->checkValue($resultValue->value);
+            echo "checkValue() wynik: " . json_encode($basicResult, JSON_PRETTY_PRINT) . "\n";
+            
+            // Test checkValueWithWarnings
+            if (method_exists($norm, 'checkValueWithWarnings')) {
+                $warningResult = $norm->checkValueWithWarnings($resultValue->value);
+                echo "checkValueWithWarnings() wynik: " . json_encode($warningResult, JSON_PRETTY_PRINT) . "\n";
+            } else {
+                echo "checkValueWithWarnings() NIE ISTNIEJE!\n";
+            }
+            
+            // Manual test dla single_threshold
+            if ($norm->type === 'single_threshold') {
+                $value = floatval($resultValue->value);
+                $threshold = floatval($norm->threshold_value);
+                echo "\n=== MANUAL TEST ===\n";
+                echo "Wartość (float): $value\n";
+                echo "Próg (float): $threshold\n";
+                echo "Kierunek: " . $norm->threshold_direction . "\n";
+                
+                if ($norm->threshold_direction === 'below') {
+                    echo "Test: $value <= $threshold = " . ($value <= $threshold ? 'TRUE (normalny)' : 'FALSE (nieprawidłowy)') . "\n";
+                } else {
+                    echo "Test: $value >= $threshold = " . ($value >= $threshold ? 'TRUE (normalny)' : 'FALSE (nieprawidłowy)') . "\n";
+                }
+            }
+            echo "</pre>";
+            
+        } else {
+            echo "<pre>BRAK NORMY!</pre>";
+        }
+    }
+    
+    exit; // Zatrzymaj wykonywanie
+}
+
+// Dodaj to też do config/web.php w rules:
+// 'test-results/<id:\d+>/debug-norms' => 'test-result/debug-norms',
+
 }
 
 

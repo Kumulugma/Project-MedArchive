@@ -160,21 +160,32 @@ $this->params['breadcrumbs'][] = $this->title;
                                 <tbody>
                                     <?php foreach ($recentResults as $result): ?>
                                         <tr>
-                                            <td><?= Html::encode($result->testTemplate->name) ?></td>
+                                            <td>
+                                                <?=
+                                                Html::a(Html::encode($result->testTemplate->name),
+                                                        ['/test-result/view', 'id' => $result->id],
+                                                        ['class' => 'text-decoration-none'])
+                                                ?>
+                                            </td>
                                             <td><?= Yii::$app->formatter->asDate($result->test_date) ?></td>
                                             <td>
-                                                <?php if ($result->has_abnormal_values): ?>
-                                                    <span class="badge bg-danger">Nieprawidłowe</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-success">Prawidłowe</span>
-                                                <?php endif; ?>
+                                                <?php
+                                                $status = $result->getDetailedStatus();
+                                                ?>
+                                                <span class="badge <?= $status['badge_class'] ?>" title="<?= $status['message'] ?>">
+                                                    <i class="<?= $status['icon'] ?>"></i>
+                                                    <?= $status['message'] ?>
+                                                    <?php if ($status['warning_count'] > 0 && $status['status'] !== 'abnormal'): ?>
+                                                        (<?= $status['warning_count'] ?>)
+        <?php endif; ?>
+                                                </span>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+    <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
-                    <?php endif; ?>
+<?php endif; ?>
                 </div>
             </div>
         </div>

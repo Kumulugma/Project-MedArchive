@@ -81,23 +81,46 @@ class ResultValue extends ActiveRecord
     {
         if (parent::beforeSave($insert)) {
             if ($this->norm_id && $this->norm) {
+                echo "<pre style='background: #f0f0f0; padding: 10px; border: 1px solid #ccc; margin: 10px 0;'>";
+                echo "=== DEBUG RESULT VALUE ===\n";
+                echo "Parametr: " . $this->parameter->name . "\n";
+                echo "Wartość: " . $this->value . "\n";
+                echo "Norma ID: " . $this->norm_id . "\n";
+                echo "Norma: " . $this->norm->name . "\n";
+                echo "Typ normy: " . $this->norm->type . "\n";
+                
+                if ($this->norm->type === 'single_threshold') {
+                    echo "Próg: " . $this->norm->threshold_value . "\n";
+                    echo "Kierunek: " . $this->norm->threshold_direction . "\n";
+                }
+                
                 $this->normalized_value = $this->norm->normalizeValue($this->value);
+                echo "Wartość znormalizowana: " . $this->normalized_value . "\n";
                 
-                // Użyj nowego systemu ostrzeżeń
+                // Test podstawowej metody checkValue
+                $basicCheck = $this->norm->checkValue($this->value);
+                echo "Podstawowe sprawdzenie: " . json_encode($basicCheck, JSON_PRETTY_PRINT) . "\n";
+                
+                // Test rozszerzonej metody
                 $check = $this->norm->checkValueWithWarnings($this->value);
+                echo "Sprawdzenie z ostrzeżeniami: " . json_encode($check, JSON_PRETTY_PRINT) . "\n";
                 
-                // Stare pola dla kompatybilności
+                // Ustaw wartości
                 $this->is_abnormal = !$check['is_normal'];
-                $this->abnormality_type = $check['type'];
+                echo "is_normal z check: " . ($check['is_normal'] ? 'TRUE' : 'FALSE') . "\n";
+                echo "is_abnormal ustawione na: " . ($this->is_abnormal ? 'TRUE' : 'FALSE') . "\n";
                 
-                // Nowe pola ostrzeżeń
-                $this->warning_level = $check['warning_level'];
-                $this->warning_message = $check['warning_message'];
-                $this->distance_from_boundary = $check['distance_from_boundary'];
-                $this->is_borderline = in_array($check['warning_level'], [
-                    ParameterNorm::WARNING_LEVEL_WARNING, 
-                    ParameterNorm::WARNING_LEVEL_CAUTION
+                $this->abnormality_type = $check['type'] ?? null;
+                $this->warning_level = $check['warning_level'] ?? null;
+                $this->warning_message = $check['warning_message'] ?? null;
+                $this->distance_from_boundary = $check['distance_from_boundary'] ?? null;
+                $this->is_borderline = in_array($check['warning_level'] ?? '', [
+                    \app\models\ParameterNorm::WARNING_LEVEL_WARNING, 
+                    \app\models\ParameterNorm::WARNING_LEVEL_CAUTION
                 ]);
+                
+                echo "========================\n";
+                echo "</pre>";
                 
                 // Generuj rekomendację
                 $this->recommendation = $this->generateRecommendation($check);
@@ -116,90 +139,105 @@ class ResultValue extends ActiveRecord
             return 'Skonsultuj wynik z lekarzem - wartość poza normą.';
         }
         
-        switch ($checkResult['warning_level']) {
-            case ParameterNorm::WARNING_LEVEL_WARNING:
+        switch ($checkResult['warning_level'] ?? '') {
+            case \app\models\ParameterNorm::WARNING_LEVEL_WARNING:
                 return 'Rozważ kontrolę za 1-3 miesiące - wartość bliska granicy normy.';
                 
-            case ParameterNorm::WARNING_LEVEL_CAUTION:
+            case \app\models\ParameterNorm::WARNING_LEVEL_CAUTION:
                 return 'Zalecana kontrola za 3-6 miesięcy i obserwacja trendów.';
                 
-            case ParameterNorm::WARNING_LEVEL_NONE:
+            case \app\models\ParameterNorm::WARNING_LEVEL_OPTIMAL:
                 return 'Wartość optymalna - kontynuuj obecny tryb życia.';
                 
             default:
-                return null;
+                return 'Wartość w normie - regularne kontrole według zaleceń lekarza.';
         }
     }
 
     /**
-     * Zwraca klasę CSS dla wyświetlania w interfejsie
+     * Sprawdza czy wartość jest normalna (helper method)
      */
-    public function getDisplayClass()
+    public function isNormal()
     {
-        if (!$this->is_abnormal) {
-            switch ($this->warning_level) {
-                case ParameterNorm::WARNING_LEVEL_WARNING:
-                    return 'text-warning';
-                case ParameterNorm::WARNING_LEVEL_CAUTION:
-                    return 'text-info';
-                default:
-                    return 'text-success';
-            }
+        return !$this->is_abnormal;
+    }
+
+    /**
+     * Zwraca status jako tekst
+     */
+    public function getStatusText()
+    {
+        if ($this->is_abnormal) {
+            return 'Nieprawidłowe';
         }
-        return 'text-danger';
-    }
-
-    /**
-     * Zwraca ikonę dla poziomu ostrzeżenia
-     */
-    public function getWarningIcon()
-    {
-        if (!$this->is_abnormal) {
-            switch ($this->warning_level) {
-                case ParameterNorm::WARNING_LEVEL_WARNING:
-                    return 'fas fa-exclamation-triangle';
-                case ParameterNorm::WARNING_LEVEL_CAUTION:
-                    return 'fas fa-eye';
-                default:
-                    return 'fas fa-check-circle';
-            }
+        
+        switch ($this->warning_level) {
+            case \app\models\ParameterNorm::WARNING_LEVEL_WARNING:
+                return 'Ostrzeżenie';
+            case \app\models\ParameterNorm::WARNING_LEVEL_CAUTION:
+                return 'Uwaga';
+            case \app\models\ParameterNorm::WARNING_LEVEL_OPTIMAL:
+                return 'Optymalne';
+            default:
+                return 'Prawidłowe';
         }
-        return 'fas fa-times-circle';
     }
 
     /**
-     * Zwraca badge HTML dla poziomu ostrzeżenia
+     * Zwraca kolor bootstrap dla statusu
      */
-    public function getWarningBadge()
+    public function getStatusColor()
     {
-        if (!$this->is_abnormal) {
-            switch ($this->warning_level) {
-                case ParameterNorm::WARNING_LEVEL_WARNING:
-                    return '<span class="badge bg-warning text-dark">Uwaga</span>';
-                case ParameterNorm::WARNING_LEVEL_CAUTION:
-                    return '<span class="badge bg-info">Obserwacja</span>';
-                default:
-                    return '<span class="badge bg-success">Optymalne</span>';
-            }
+        if ($this->is_abnormal) {
+            return 'danger';
         }
-        return '<span class="badge bg-danger">Nieprawidłowe</span>';
+        
+        switch ($this->warning_level) {
+            case \app\models\ParameterNorm::WARNING_LEVEL_WARNING:
+                return 'warning';
+            case \app\models\ParameterNorm::WARNING_LEVEL_CAUTION:
+                return 'info';
+            case \app\models\ParameterNorm::WARNING_LEVEL_OPTIMAL:
+                return 'success';
+            default:
+                return 'success';
+        }
     }
 
     /**
-     * Sprawdza czy wartość wymaga uwagi lekarskiej
+     * Sprawdza czy wartość wymaga uwagi (ostrzeżenie lub nieprawidłowa)
      */
-    public function requiresMedicalAttention()
+    public function requiresAttention()
     {
-        return $this->is_abnormal || 
-               $this->warning_level === ParameterNorm::WARNING_LEVEL_WARNING;
+        return $this->is_abnormal || in_array($this->warning_level, [
+            \app\models\ParameterNorm::WARNING_LEVEL_WARNING,
+            \app\models\ParameterNorm::WARNING_LEVEL_CAUTION
+        ]);
     }
 
     /**
-     * Sprawdza czy wartość wymaga monitorowania
+     * Po zapisaniu - aktualizuj flagę w TestResult
      */
-    public function requiresMonitoring()
+    public function afterSave($insert, $changedAttributes)
     {
-        return $this->warning_level === ParameterNorm::WARNING_LEVEL_CAUTION || 
-               $this->is_borderline;
+        parent::afterSave($insert, $changedAttributes);
+        
+        // Aktualizuj flagę has_abnormal_values w TestResult
+        if ($this->testResult) {
+            $this->testResult->updateAbnormalFlag();
+        }
+    }
+
+    /**
+     * Po usunięciu - aktualizuj flagę w TestResult
+     */
+    public function afterDelete()
+    {
+        parent::afterDelete();
+        
+        // Aktualizuj flagę has_abnormal_values w TestResult
+        if ($this->testResult) {
+            $this->testResult->updateAbnormalFlag();
+        }
     }
 }

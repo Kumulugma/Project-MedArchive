@@ -1,403 +1,39 @@
 /**
- * MedArchive - Main JavaScript
- * Medical Archive System Frontend Functions
+ * MedArchive - Main JavaScript Module
+ * Zarządzanie normami w szablonach badań
  */
 
-$(document).ready(function() {
-    
-    // Initialize tooltips
-    initializeTooltips();
-    
-    // Initialize confirmation dialogs
-    initializeConfirmations();
-    
-    // Auto-hide alerts
-    autoHideAlerts();
-    
-    // Initialize form enhancements
-    enhanceForms();
-    
-    // Initialize medical-specific features
-    initializeMedicalFeatures();
-    
-    // Initialize animations
-    initializeAnimations();
-    
-    // Initialize responsive tables
-    initializeResponsiveTables();
-});
+// Globalne zmienne
+window.currentTemplateId = null;
+window.currentParameterId = null;
 
-/**
- * Initialize responsive tables for mobile devices
- */
-function initializeResponsiveTables() {
-    if (window.innerWidth <= 768) {
-        $('.table tbody td').each(function() {
-            var $cell = $(this);
-            var columnIndex = $cell.index();
-            var $header = $('.table thead th').eq(columnIndex);
-            
-            if ($header.length && !$cell.attr('data-label')) {
-                var headerText = $header.text().trim();
-                $cell.attr('data-label', headerText);
-            }
-        });
-        
-        // Add mobile-specific classes
-        $('.table tbody tr').each(function() {
-            var $row = $(this);
-            
-            // Check for abnormal values
-            if ($row.find('.abnormal-value').length > 0) {
-                $row.attr('data-abnormal', 'true');
-            }
-            
-            // Check for urgent/overdue items
-            if ($row.find('.badge.bg-warning').length > 0) {
-                $row.attr('data-urgent', 'true');
-            }
-            
-            if ($row.find('.badge.bg-danger').length > 0) {
-                $row.attr('data-overdue', 'true');
-            }
-        });
-    }
-    
-    // Re-initialize on window resize
-    $(window).on('resize', function() {
-        if (window.innerWidth <= 768) {
-            initializeResponsiveTables();
-        }
-    });
-}
+// Utility functions
+window.getTemplateIdFromUrl = function() {
+    const match = window.location.pathname.match(/test-templates\/(\d+)/);
+    return match ? parseInt(match[1]) : null;
+};
 
-/**
- * Initialize Bootstrap tooltips
- */
-function initializeTooltips() {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-}
-
-/**
- * Initialize confirmation dialogs with medical theme
- */
-function initializeConfirmations() {
-    $('[data-confirm]').on('click', function(e) {
-        var message = $(this).data('confirm') || 'Czy na pewno chcesz wykonać tę operację?';
-        
-        if (!confirm('🏥 MedArchive\n\n' + message)) {
-            e.preventDefault();
-            return false;
-        }
-    });
-}
-
-/**
- * Auto-hide success alerts after 5 seconds
- */
-function autoHideAlerts() {
-    $('.alert').each(function() {
-        var alert = $(this);
-        if (alert.hasClass('alert-success') || alert.hasClass('alert-info')) {
-            setTimeout(function() {
-                alert.fadeOut('slow', function() {
-                    $(this).remove();
-                });
-            }, 5000);
-        }
-    });
-}
-
-/**
- * Enhance forms with medical theme features
- */
-function enhanceForms() {
-    // Add focus animations to form controls
-    $('.form-control, .form-select').on('focus', function() {
-        $(this).closest('.form-group, .mb-3').addClass('focused');
-    }).on('blur', function() {
-        $(this).closest('.form-group, .mb-3').removeClass('focused');
-    });
-    
-    // Add validation styling
-    $('.form-control').on('input change', function() {
-        var $this = $(this);
-        var value = $this.val();
-        
-        if ($this.attr('required') && value.trim() === '') {
-            $this.removeClass('is-valid').addClass('is-invalid');
-        } else if (value.trim() !== '') {
-            $this.removeClass('is-invalid').addClass('is-valid');
-        } else {
-            $this.removeClass('is-valid is-invalid');
-        }
-    });
-}
-
-/**
- * Medical-specific feature enhancements
- */
-function initializeMedicalFeatures() {
-    // Highlight abnormal values with animation
-    $('.abnormal-value').each(function() {
-        $(this).addClass('animate__animated animate__pulse animate__infinite');
-    });
-    
-    // Add medical icons to specific buttons
-    enhanceMedicalButtons();
-    
-    // Initialize parameter value validation
-    initializeParameterValidation();
-}
-
-/**
- * Add medical icons to buttons
- */
-function enhanceMedicalButtons() {
-    // Add icons to buttons that don't have them
-    $('a[href*="create"], .btn:contains("Dodaj"), .btn:contains("Nowy")').each(function() {
-        var $btn = $(this);
-        if (!$btn.find('i').length) {
-            $btn.prepend('<i class="fas fa-plus"></i> ');
-        }
-    });
-    
-    $('a[href*="update"], .btn:contains("Edytuj")').each(function() {
-        var $btn = $(this);
-        if (!$btn.find('i').length) {
-            $btn.prepend('<i class="fas fa-edit"></i> ');
-        }
-    });
-    
-    $('a[href*="delete"], .btn:contains("Usuń")').each(function() {
-        var $btn = $(this);
-        if (!$btn.find('i').length) {
-            $btn.prepend('<i class="fas fa-trash"></i> ');
-        }
-    });
-    
-    $('a[href*="view"], .btn:contains("Podgląd")').each(function() {
-        var $btn = $(this);
-        if (!$btn.find('i').length) {
-            $btn.prepend('<i class="fas fa-eye"></i> ');
-        }
-    });
-}
-
-/**
- * Initialize parameter value validation for medical data
- */
-function initializeParameterValidation() {
-    $('.value-input').on('input', function() {
-        var $input = $(this);
-        var value = parseFloat($input.val());
-        var parameterId = $input.data('parameter-id');
-        
-        if (!isNaN(value) && parameterId) {
-            validateMedicalValue($input, value, parameterId);
-        }
-    });
-}
-
-/**
- * Validate medical values against norms
- */
-function validateMedicalValue($input, value, parameterId) {
-    var $group = $input.closest('.parameter-group');
-    var $normSelect = $group.find('.norm-select');
-    var normId = $normSelect.val();
-    
-    if (normId) {
-        $.post('/test-result/validate-value', {
-            value: value,
-            normId: normId,
-            _csrf: $('meta[name=csrf-token]').attr('content')
-        })
-        .done(function(response) {
-            updateValueValidationUI($input, response);
-        })
-        .fail(function() {
-            console.log('Validation failed');
-        });
-    }
-}
-
-/**
- * Update UI based on validation response
- */
-function updateValueValidationUI($input, response) {
-    $input.removeClass('is-valid is-invalid abnormal-value abnormal-low abnormal-high');
-    
-    if (response.is_normal) {
-        $input.addClass('is-valid');
-        showValidationMessage($input, 'Wartość prawidłowa', 'success');
-    } else {
-        $input.addClass('is-invalid abnormal-value');
-        
-        if (response.type === 'low') {
-            $input.addClass('abnormal-low');
-            showValidationMessage($input, 'Wartość poniżej normy', 'warning');
-        } else if (response.type === 'high') {
-            $input.addClass('abnormal-high');
-            showValidationMessage($input, 'Wartość powyżej normy', 'warning');
-        } else {
-            showValidationMessage($input, 'Wartość nieprawidłowa', 'danger');
-        }
-    }
-}
-
-/**
- * Show validation message
- */
-function showValidationMessage($input, message, type) {
-    var $feedback = $input.siblings('.validation-feedback');
-    if (!$feedback.length) {
-        $feedback = $('<div class="validation-feedback"></div>');
-        $input.after($feedback);
-    }
-    
-    $feedback.removeClass('text-success text-warning text-danger')
-             .addClass('text-' + type)
-             .html('<i class="fas fa-info-circle"></i> ' + message);
-}
-
-/**
- * Initialize subtle animations
- */
-function initializeAnimations() {
-    // Animate cards on hover
-    $('.card').hover(
-        function() {
-            $(this).addClass('shadow-medical');
-        },
-        function() {
-            $(this).removeClass('shadow-medical');
-        }
-    );
-    
-    // Animate buttons on click
-    $('.btn').on('click', function() {
-        var $btn = $(this);
-        $btn.addClass('animate__animated animate__pulse');
-        setTimeout(function() {
-            $btn.removeClass('animate__animated animate__pulse');
-        }, 600);
-    });
-    
-    // Animate table rows on hover (desktop only)
-    if (window.innerWidth > 768) {
-        $('.table tbody tr').hover(
-            function() {
-                $(this).addClass('table-hover-effect');
-            },
-            function() {
-                $(this).removeClass('table-hover-effect');
-            }
-        );
-    }
-}
-
-/**
- * Medical data specific functions
- */
-var MedicalData = {
-    
-    /**
-     * Format medical values for display
-     */
-    formatValue: function(value, unit) {
-        if (unit) {
-            return value + ' ' + unit;
-        }
-        return value;
-    },
-    
-    /**
-     * Check if value is within normal range
-     */
-    isNormalValue: function(value, min, max) {
-        return value >= min && value <= max;
-    },
-    
-    /**
-     * Get abnormality type
-     */
-    getAbnormalityType: function(value, min, max) {
-        if (value < min) return 'low';
-        if (value > max) return 'high';
-        return null;
-    }
+window.getCsrfToken = function() {
+    return $('meta[name=csrf-token]').attr('content');
 };
 
 /**
- * Dashboard specific enhancements
- */
-function initializeDashboard() {
-    // Animate dashboard counters
-    $('.dashboard-stats .h5').each(function() {
-        var $this = $(this);
-        var countTo = parseInt($this.text()) || 0;
-        
-        $({ countNum: 0 }).animate({
-            countNum: countTo
-        }, {
-            duration: 2000,
-            easing: 'swing',
-            step: function() {
-                $this.text(Math.floor(this.countNum));
-            },
-            complete: function() {
-                $this.text(this.countNum);
-            }
-        });
-    });
-}
-
-/**
- * Initialize dashboard if on dashboard page
- */
-if (window.location.pathname.includes('dashboard')) {
-    $(document).ready(function() {
-        initializeDashboard();
-    });
-}
-
-/**
- * Global error handler
- */
-window.addEventListener('error', function(e) {
-    console.error('MedArchive Error:', e.error);
-});
-
-/**
- * Export functions for external use
- */
-window.MedArchive = {
-    MedicalData: MedicalData,
-    validateMedicalValue: validateMedicalValue,
-    showValidationMessage: showValidationMessage,
-    initializeResponsiveTables: initializeResponsiveTables
-};
-
-/**
- * Sidebar management functions for test templates
+ * SIDEBAR MANAGEMENT - Główny system zarządzania normami
  */
 window.openNormsSidebar = function(parameterId, parameterName) {
-    console.log('Opening sidebar for parameter:', {parameterId, parameterName});
+    console.log('openNormsSidebar called with:', {parameterId, parameterName});
     
-    // Get current template ID from URL
-    var templateId = window.location.pathname.match(/test-templates\/(\d+)/);
+    const templateId = window.getTemplateIdFromUrl();
     if (!templateId) {
         console.error('Cannot find template ID');
-        alert('Błąd: Nie można znaleźć ID szablonu');
         return;
     }
-    templateId = templateId[1];
+
+    // Store current context
+    window.currentTemplateId = templateId;
+    window.currentParameterId = parameterId;
     
-    // Set title
+    // Set sidebar title
     $('#sidebarTitle').html('<i class="fas fa-cog"></i> Zarządzanie normami - ' + parameterName);
     
     // Show overlay and sidebar
@@ -411,6 +47,10 @@ window.openNormsSidebar = function(parameterId, parameterName) {
 window.closeNormsSidebar = function() {
     $('#normsSidebar').removeClass('show');
     $('#sidebarOverlay').removeClass('show');
+    
+    // Clear context
+    window.currentTemplateId = null;
+    window.currentParameterId = null;
 };
 
 window.loadNormsContent = function(parameterId, templateId) {
@@ -435,54 +75,70 @@ window.loadNormsContent = function(parameterId, templateId) {
             <div class="alert alert-danger m-3">
                 <i class="fas fa-exclamation-triangle"></i>
                 Błąd podczas ładowania norm: ${error}
+                <br><small>Status: ${status}</small>
             </div>
         `);
     });
 };
 
+/**
+ * NORM OPERATIONS - Operacje na normach
+ */
 window.deleteNormFromSidebar = function(normId, parameterId, normName) {
     console.log('deleteNormFromSidebar called with:', {normId, parameterId, normName});
     
-    // Get template ID
-    var templateId = window.location.pathname.match(/test-templates\/(\d+)/);
+    const templateId = window.currentTemplateId || window.getTemplateIdFromUrl();
     if (!templateId) {
         console.error('Cannot find template ID');
+        window.showSidebarAlert('danger', 'Błąd: Nie można określić ID szablonu');
         return;
     }
-    templateId = templateId[1];
     
-    // Convert to numbers
+    // Convert to numbers and validate
     normId = parseInt(normId);
     parameterId = parseInt(parameterId);
     
     if (!normId || !parameterId || isNaN(normId) || isNaN(parameterId)) {
-        alert('Błąd: Nieprawidłowe parametry');
+        window.showSidebarAlert('danger', 'Błąd: Nieprawidłowe parametry');
         console.error('Invalid parameters:', {normId, parameterId, normName});
         return;
     }
     
-    if (confirm('Czy na pewno chcesz usunąć normę "' + normName + '"?')) {
+    if (confirm('Czy na pewno chcesz usunąć normę "' + normName + '"?\n\nTa operacja jest nieodwracalna.')) {
+        // Show loading state
+        const deleteBtn = $(`button[data-norm-id="${normId}"]`);
+        const originalText = deleteBtn.html();
+        deleteBtn.html('<i class="fas fa-spinner fa-spin"></i> Usuwanie...').prop('disabled', true);
+        
         $.post('/test-templates/delete-norm-ajax', {
             id: templateId,
             parameterId: parameterId,
             normId: normId,
-            _csrf: $('meta[name=csrf-token]').attr('content')
+            _csrf: window.getCsrfToken()
         })
         .done(function(response) {
             console.log('Delete response:', response);
             if (response && response.success) {
                 window.showSidebarAlert('success', 'Norma została usunięta.');
-                window.loadNormsContent(parameterId, templateId);
+                // Reload content after short delay
+                setTimeout(function() {
+                    window.loadNormsContent(parameterId, templateId);
+                }, 1000);
+                // Reload page after longer delay to update main view
                 setTimeout(function() {
                     location.reload();
-                }, 2000);
+                }, 3000);
             } else {
                 window.showSidebarAlert('danger', 'Błąd: ' + (response && response.message ? response.message : 'Nie udało się usunąć normy.'));
+                // Restore button
+                deleteBtn.html(originalText).prop('disabled', false);
             }
         })
         .fail(function(xhr, status, error) {
-            console.log('Delete failed:', {xhr, status, error});
+            console.error('Delete failed:', {xhr, status, error});
             window.showSidebarAlert('danger', 'Błąd komunikacji z serwerem: ' + error);
+            // Restore button
+            deleteBtn.html(originalText).prop('disabled', false);
         });
     }
 };
@@ -490,48 +146,214 @@ window.deleteNormFromSidebar = function(normId, parameterId, normName) {
 window.enableWarningsFromSidebar = function(normId, parameterId) {
     console.log('enableWarningsFromSidebar called with:', {normId, parameterId});
     
-    // Get template ID
-    var templateId = window.location.pathname.match(/test-templates\/(\d+)/);
+    const templateId = window.currentTemplateId || window.getTemplateIdFromUrl();
     if (!templateId) {
         console.error('Cannot find template ID');
+        window.showSidebarAlert('danger', 'Błąd: Nie można określić ID szablonu');
         return;
     }
-    templateId = templateId[1];
     
-    // Convert to numbers
+    // Convert to numbers and validate
     normId = parseInt(normId);
     parameterId = parseInt(parameterId);
     
     if (!normId || !parameterId || isNaN(normId) || isNaN(parameterId)) {
-        alert('Błąd: Nieprawidłowe parametry');
+        window.showSidebarAlert('danger', 'Błąd: Nieprawidłowe parametry');
         console.error('Invalid parameters:', {normId, parameterId});
         return;
     }
+    
+    // Show loading state
+    const enableBtn = $(`button[data-norm-id="${normId}"][onclick*="enableWarnings"]`);
+    const originalText = enableBtn.html();
+    enableBtn.html('<i class="fas fa-spinner fa-spin"></i> Włączanie...').prop('disabled', true);
     
     $.post('/test-templates/enable-norm-warnings', {
         id: templateId,
         parameterId: parameterId,
         normId: normId,
-        _csrf: $('meta[name=csrf-token]').attr('content')
+        _csrf: window.getCsrfToken()
     })
     .done(function(response) {
         console.log('Enable warnings response:', response);
         if (response && response.success) {
             window.showSidebarAlert('success', 'Ostrzeżenia zostały włączone.');
-            window.loadNormsContent(parameterId, templateId);
+            // Reload content after short delay
+            setTimeout(function() {
+                window.loadNormsContent(parameterId, templateId);
+            }, 1000);
+            // Reload page after longer delay to update main view
+            setTimeout(function() {
+                location.reload();
+            }, 3000);
+        } else {
+            window.showSidebarAlert('danger', 'Błąd: ' + (response && response.message ? response.message : 'Nie udało się włączyć ostrzeżeń.'));
+            // Restore button
+            enableBtn.html(originalText).prop('disabled', false);
+        }
+    })
+    .fail(function(xhr, status, error) {
+        console.error('Enable warnings failed:', {xhr, status, error});
+        window.showSidebarAlert('danger', 'Błąd komunikacji z serwerem: ' + error);
+        // Restore button
+        enableBtn.html(originalText).prop('disabled', false);
+    });
+};
+
+window.disableWarningsFromSidebar = function(normId, parameterId) {
+    console.log('disableWarningsFromSidebar called with:', {normId, parameterId});
+    
+    const templateId = window.currentTemplateId || window.getTemplateIdFromUrl();
+    if (!templateId) {
+        console.error('Cannot find template ID');
+        window.showSidebarAlert('danger', 'Błąd: Nie można określić ID szablonu');
+        return;
+    }
+    
+    // Convert to numbers and validate
+    normId = parseInt(normId);
+    parameterId = parseInt(parameterId);
+    
+    if (!normId || !parameterId || isNaN(normId) || isNaN(parameterId)) {
+        window.showSidebarAlert('danger', 'Błąd: Nieprawidłowe parametry');
+        console.error('Invalid parameters:', {normId, parameterId});
+        return;
+    }
+    
+    if (confirm('Czy na pewno chcesz wyłączyć ostrzeżenia dla tej normy?')) {
+        // Show loading state
+        const disableBtn = $(`button[data-norm-id="${normId}"][onclick*="disableWarnings"]`);
+        const originalText = disableBtn.html();
+        disableBtn.html('<i class="fas fa-spinner fa-spin"></i> Wyłączanie...').prop('disabled', true);
+        
+        $.post('/test-templates/disable-norm-warnings', {
+            id: templateId,
+            parameterId: parameterId,
+            normId: normId,
+            _csrf: window.getCsrfToken()
+        })
+        .done(function(response) {
+            console.log('Disable warnings response:', response);
+            if (response && response.success) {
+                window.showSidebarAlert('success', 'Ostrzeżenia zostały wyłączone.');
+                // Reload content after short delay
+                setTimeout(function() {
+                    window.loadNormsContent(parameterId, templateId);
+                }, 1000);
+                // Reload page after longer delay to update main view
+                setTimeout(function() {
+                    location.reload();
+                }, 3000);
+            } else {
+                window.showSidebarAlert('danger', 'Błąd: ' + (response && response.message ? response.message : 'Nie udało się wyłączyć ostrzeżeń.'));
+                // Restore button
+                disableBtn.html(originalText).prop('disabled', false);
+            }
+        })
+        .fail(function(xhr, status, error) {
+            console.error('Disable warnings failed:', {xhr, status, error});
+            window.showSidebarAlert('danger', 'Błąd komunikacji z serwerem: ' + error);
+            // Restore button
+            disableBtn.html(originalText).prop('disabled', false);
+        });
+    }
+};
+
+/**
+ * QUICK ACTIONS - Szybkie akcje
+ */
+window.quickEnableWarning = function(parameterId) {
+    console.log('quickEnableWarning called for parameter:', parameterId);
+    
+    const templateId = window.getTemplateIdFromUrl();
+    if (!templateId) {
+        console.error('Cannot find template ID');
+        alert('Błąd: Nie można określić ID szablonu');
+        return;
+    }
+    
+    parameterId = parseInt(parameterId);
+    if (!parameterId || isNaN(parameterId)) {
+        alert('Błąd: Nieprawidłowy ID parametru');
+        return;
+    }
+    
+    // Show loading state
+    const quickBtn = $(`button[onclick*="quickEnableWarning(${parameterId})"]`);
+    const originalText = quickBtn.html();
+    quickBtn.html('<i class="fas fa-spinner fa-spin"></i> Włączanie...').prop('disabled', true);
+    
+    $.post('/test-templates/' + templateId + '/quick-enable-warning/' + parameterId, {
+        _csrf: window.getCsrfToken()
+    })
+    .done(function(response) {
+        console.log('Quick enable response:', response);
+        if (response && response.success) {
+            // Show success message
+            window.showPageAlert('success', response.message);
+            // Reload page after short delay
             setTimeout(function() {
                 location.reload();
             }, 2000);
         } else {
-            window.showSidebarAlert('danger', 'Błąd: ' + (response && response.message ? response.message : 'Nie udało się włączyć ostrzeżeń.'));
+            window.showPageAlert('danger', 'Błąd: ' + (response && response.message ? response.message : 'Nie udało się włączyć ostrzeżeń.'));
+            // Restore button
+            quickBtn.html(originalText).prop('disabled', false);
         }
     })
     .fail(function(xhr, status, error) {
-        console.log('Enable warnings failed:', {xhr, status, error});
-        window.showSidebarAlert('danger', 'Błąd komunikacji z serwerem: ' + error);
+        console.error('Quick enable failed:', {xhr, status, error});
+        window.showPageAlert('danger', 'Błąd komunikacji z serwerem: ' + error);
+        // Restore button
+        quickBtn.html(originalText).prop('disabled', false);
     });
 };
 
+window.bulkEnableWarnings = function() {
+    console.log('bulkEnableWarnings called');
+    
+    const templateId = window.getTemplateIdFromUrl();
+    if (!templateId) {
+        console.error('Cannot find template ID');
+        alert('Błąd: Nie można określić ID szablonu');
+        return;
+    }
+    
+    if (confirm('Czy na pewno chcesz włączyć ostrzeżenia dla wszystkich parametrów, które mają skonfigurowane normy?')) {
+        // Show loading state
+        const bulkBtn = $('button[onclick*="bulkEnableWarnings"]');
+        const originalText = bulkBtn.html();
+        bulkBtn.html('<i class="fas fa-spinner fa-spin"></i> Włączanie...').prop('disabled', true);
+        
+        $.post('/test-templates/' + templateId + '/bulk-enable-warnings', {
+            _csrf: window.getCsrfToken()
+        })
+        .done(function(response) {
+            console.log('Bulk enable response:', response);
+            if (response && response.success) {
+                window.showPageAlert('success', response.message);
+                // Reload page after short delay
+                setTimeout(function() {
+                    location.reload();
+                }, 2000);
+            } else {
+                window.showPageAlert('danger', 'Błąd: ' + (response && response.message ? response.message : 'Nie udało się włączyć ostrzeżeń.'));
+                // Restore button
+                bulkBtn.html(originalText).prop('disabled', false);
+            }
+        })
+        .fail(function(xhr, status, error) {
+            console.error('Bulk enable failed:', {xhr, status, error});
+            window.showPageAlert('danger', 'Błąd komunikacji z serwerem: ' + error);
+            // Restore button
+            bulkBtn.html(originalText).prop('disabled', false);
+        });
+    }
+};
+
+/**
+ * ALERT SYSTEMS - Systemy powiadomień
+ */
 window.showSidebarAlert = function(type, message) {
     const alertHtml = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -541,156 +363,19 @@ window.showSidebarAlert = function(type, message) {
         </div>
     `;
     
+    // Remove existing alerts
+    $('#sidebarContent .alert').remove();
+    
+    // Add new alert
     $('#sidebarContent').prepend(alertHtml);
     
+    // Auto-hide after 5 seconds
     setTimeout(function() {
-        $('.alert').fadeOut();
+        $('#sidebarContent .alert').fadeOut();
     }, 5000);
 };
 
-/**
- * Modal management functions for test templates (legacy support)
- */
-window.loadNormsModal = function(parameterId, parameterName) {
-    console.log('loadNormsModal called with:', {parameterId, parameterName});
-    
-    // Get current template ID from URL or data attribute
-    var templateId = window.location.pathname.match(/test-templates\/(\d+)/);
-    if (!templateId) {
-        console.error('Cannot find template ID');
-        return;
-    }
-    templateId = templateId[1];
-    
-    // Set modal title
-    $('#normsModalLabel').html('<i class="fas fa-cog"></i> Zarządzanie normami' + (parameterName ? ' - ' + parameterName : ''));
-    
-    // Show loading spinner
-    $('#normsModalBody').html(`
-        <div class="text-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Ładowanie...</span>
-            </div>
-            <p class="mt-2">Ładowanie norm dla parametru...</p>
-        </div>
-    `);
-    
-    // Load norms via AJAX
-    $.get('/test-templates/' + templateId + '/get-parameter-norms', {
-        parameterId: parameterId
-    })
-    .done(function(data) {
-        $('#normsModalBody').html(data);
-    })
-    .fail(function(xhr, status, error) {
-        console.error('Load norms failed:', {xhr, status, error});
-        $('#normsModalBody').html(`
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle"></i>
-                Błąd podczas ładowania norm. Spróbuj ponownie.
-                <br><small>Error: ${error}</small>
-            </div>
-        `);
-    });
-};
-
-window.deleteNormFromModal = function(normId, parameterId, normName) {
-    console.log('deleteNormFromModal called with:', {normId, parameterId, normName});
-    
-    // Get template ID
-    var templateId = window.location.pathname.match(/test-templates\/(\d+)/);
-    if (!templateId) {
-        console.error('Cannot find template ID');
-        return;
-    }
-    templateId = templateId[1];
-    
-    // Convert to numbers
-    normId = parseInt(normId);
-    parameterId = parseInt(parameterId);
-    
-    if (!normId || !parameterId || isNaN(normId) || isNaN(parameterId)) {
-        alert('Błąd: Nieprawidłowe parametry');
-        console.error('Invalid parameters:', {normId, parameterId, normName});
-        return;
-    }
-    
-    if (confirm('Czy na pewno chcesz usunąć normę "' + normName + '"?')) {
-        $.post('/test-templates/delete-norm-ajax', {
-            id: templateId,
-            parameterId: parameterId,
-            normId: normId,
-            _csrf: $('meta[name=csrf-token]').attr('content')
-        })
-        .done(function(response) {
-            console.log('Delete response:', response);
-            if (response && response.success) {
-                showModalAlert('success', 'Norma została usunięta.');
-                // Reload modal content
-                loadNormsModal(parameterId, '');
-                // Reload page after 2 seconds
-                setTimeout(function() {
-                    location.reload();
-                }, 2000);
-            } else {
-                showModalAlert('danger', 'Błąd: ' + (response && response.message ? response.message : 'Nie udało się usunąć normy.'));
-            }
-        })
-        .fail(function(xhr, status, error) {
-            console.log('Delete failed:', {xhr, status, error});
-            showModalAlert('danger', 'Błąd komunikacji z serwerem: ' + error);
-        });
-    }
-};
-
-window.enableWarningsForNormModal = function(normId, parameterId) {
-    console.log('enableWarningsForNormModal called with:', {normId, parameterId});
-    
-    // Get template ID
-    var templateId = window.location.pathname.match(/test-templates\/(\d+)/);
-    if (!templateId) {
-        console.error('Cannot find template ID');
-        return;
-    }
-    templateId = templateId[1];
-    
-    // Convert to numbers
-    normId = parseInt(normId);
-    parameterId = parseInt(parameterId);
-    
-    if (!normId || !parameterId || isNaN(normId) || isNaN(parameterId)) {
-        alert('Błąd: Nieprawidłowe parametry');
-        console.error('Invalid parameters:', {normId, parameterId});
-        return;
-    }
-    
-    $.post('/test-templates/enable-norm-warnings', {
-        id: templateId,
-        parameterId: parameterId,
-        normId: normId,
-        _csrf: $('meta[name=csrf-token]').attr('content')
-    })
-    .done(function(response) {
-        console.log('Enable warnings response:', response);
-        if (response && response.success) {
-            showModalAlert('success', 'Ostrzeżenia zostały włączone.');
-            // Reload modal content
-            loadNormsModal(parameterId, '');
-            // Reload page after 2 seconds
-            setTimeout(function() {
-                location.reload();
-            }, 2000);
-        } else {
-            showModalAlert('danger', 'Błąd: ' + (response && response.message ? response.message : 'Nie udało się włączyć ostrzeżeń.'));
-        }
-    })
-    .fail(function(xhr, status, error) {
-        console.log('Enable warnings failed:', {xhr, status, error});
-        showModalAlert('danger', 'Błąd komunikacji z serwerem: ' + error);
-    });
-};
-
-window.showModalAlert = function(type, message) {
+window.showPageAlert = function(type, message) {
     const alertHtml = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
             <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
@@ -699,37 +384,98 @@ window.showModalAlert = function(type, message) {
         </div>
     `;
     
-    $('#normsModalBody').prepend(alertHtml);
+    // Find container for alerts (usually after page header)
+    let alertContainer = $('.page-header').next('.alert-container');
+    if (alertContainer.length === 0) {
+        // Create container if it doesn't exist
+        alertContainer = $('<div class="alert-container mt-3"></div>');
+        $('.page-header').after(alertContainer);
+    }
+    
+    // Remove existing alerts
+    alertContainer.find('.alert').remove();
+    
+    // Add new alert
+    alertContainer.html(alertHtml);
     
     // Auto-hide after 5 seconds
     setTimeout(function() {
-        $('.alert').fadeOut();
+        alertContainer.find('.alert').fadeOut();
     }, 5000);
 };
 
 /**
- * Fix Bootstrap modal initialization and sidebar support
+ * MODAL MANAGEMENT - Legacy support for existing modals
+ */
+window.loadNormsModal = function(parameterId, parameterName) {
+    console.log('loadNormsModal called (LEGACY) - redirecting to sidebar');
+    // Redirect legacy modal calls to new sidebar system
+    window.openNormsSidebar(parameterId, parameterName);
+};
+
+window.deleteNormFromModal = function(normId, parameterId, normName) {
+    console.log('deleteNormFromModal called (LEGACY) - redirecting to sidebar');
+    // Redirect legacy modal calls to new sidebar system
+    window.deleteNormFromSidebar(normId, parameterId, normName);
+};
+
+window.enableWarningsForNormModal = function(normId, parameterId) {
+    console.log('enableWarningsForNormModal called (LEGACY) - redirecting to sidebar');
+    // Redirect legacy modal calls to new sidebar system
+    window.enableWarningsFromSidebar(normId, parameterId);
+};
+
+/**
+ * FORM HELPERS - Helpers for norm forms
+ */
+window.toggleNormFields = function(type) {
+    console.log('toggleNormFields called with type:', type);
+    
+    // Hide all specific fields
+    $('#positive-negative-fields, #range-fields, #single-threshold-fields, #multiple-thresholds-fields').hide();
+    
+    // Show specific fields based on type
+    switch(type) {
+        case 'positive_negative':
+            $('#positive-negative-fields').show();
+            break;
+        case 'range':
+            $('#range-fields').show();
+            break;
+        case 'single_threshold':
+            $('#single-threshold-fields').show();
+            break;
+        case 'multiple_thresholds':
+            $('#multiple-thresholds-fields').show();
+            break;
+    }
+    
+    // Update zones preview if function exists
+    if (typeof window.updateZonesPreview === 'function') {
+        window.updateZonesPreview();
+    }
+};
+
+window.toggleWarningFields = function(enabled) {
+    console.log('toggleWarningFields called with enabled:', enabled);
+    
+    if (enabled) {
+        $('#warning-fields').show();
+    } else {
+        $('#warning-fields').hide();
+    }
+    
+    // Update zones preview if function exists
+    if (typeof window.updateZonesPreview === 'function') {
+        window.updateZonesPreview();
+    }
+};
+
+/**
+ * INITIALIZATION - Setup when DOM is ready
  */
 $(document).ready(function() {
-    // Reset modal when closed
-    $(document).on('hidden.bs.modal', '#normsModal', function() {
-        $('#normsModalBody').html(`
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Ładowanie...</span>
-                </div>
-            </div>
-        `);
-    });
-    
-    // Fix modal backdrop issue
-    $(document).on('show.bs.modal', '.modal', function() {
-        var zIndex = 1040 + (10 * $('.modal:visible').length);
-        $(this).css('z-index', zIndex);
-        setTimeout(function() {
-            $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
-        }, 0);
-    });
+    console.log('MedArchive main.js initialized');
     
     // Sidebar support - Escape key closes sidebar
     $(document).keydown(function(e) {
@@ -739,7 +485,72 @@ $(document).ready(function() {
     });
     
     // Overlay click closes sidebar
-    $(document).on('click', '#sidebarOverlay', function() {
-        window.closeNormsSidebar();
+    $(document).on('click', '#sidebarOverlay', function(e) {
+        if (e.target === this) {
+            window.closeNormsSidebar();
+        }
     });
+    
+    // Fix Bootstrap modal z-index issues
+    $(document).on('show.bs.modal', '.modal', function() {
+        var zIndex = 1040 + (10 * $('.modal:visible').length);
+        $(this).css('z-index', zIndex);
+        setTimeout(function() {
+            $('.modal-backdrop').not('.modal-stack').css('z-index', zIndex - 1).addClass('modal-stack');
+        }, 0);
+    });
+    
+    // Auto-close alerts
+    setTimeout(function() {
+        $('.alert-auto-close').fadeOut();
+    }, 5000);
+    
+    // Initialize form fields if on norm form page
+    if ($('#norm-type-select').length) {
+        const currentType = $('#norm-type-select').val();
+        if (currentType) {
+            window.toggleNormFields(currentType);
+        }
+        
+        // Setup change handler
+        $('#norm-type-select').on('change', function() {
+            window.toggleNormFields($(this).val());
+        });
+    }
+    
+    // Initialize warning fields if on norm form page
+    if ($('input[name="ParameterNorm[warning_enabled]"]').length) {
+        const warningEnabled = $('input[name="ParameterNorm[warning_enabled]"]').is(':checked');
+        window.toggleWarningFields(warningEnabled);
+        
+        // Setup change handler
+        $('input[name="ParameterNorm[warning_enabled]"]').on('change', function() {
+            window.toggleWarningFields($(this).is(':checked'));
+        });
+    }
+    
+    console.log('MedArchive main.js ready');
 });
+
+/**
+ * ERROR HANDLING - Global error handler
+ */
+window.addEventListener('error', function(e) {
+    console.error('JavaScript Error:', e.error);
+    // Optional: Send error to server for logging
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled Promise Rejection:', e.reason);
+    // Optional: Send error to server for logging
+});
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        getTemplateIdFromUrl: window.getTemplateIdFromUrl,
+        getCsrfToken: window.getCsrfToken,
+        openNormsSidebar: window.openNormsSidebar,
+        closeNormsSidebar: window.closeNormsSidebar
+    };
+}

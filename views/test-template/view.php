@@ -1,336 +1,295 @@
 <?php
-// views/test-template/view.php
 
 use yii\helpers\Html;
 use yii\widgets\DetailView;
-use yii\bootstrap5\Progress;
-use app\components\MedicalThresholdManager;
+use app\assets\TestTemplateAsset;
+
+/* @var $this yii\web\View */
+/* @var $model app\models\TestTemplate */
+
+TestTemplateAsset::register($this);
 
 $this->title = $model->name;
 $this->params['breadcrumbs'][] = ['label' => 'Szablony badań', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
-
-// Pobierz statystyki ostrzeżeń
-$warningsStats = $model->getWarningsStatistics();
-$hasCompleteSetup = $model->hasCompleteWarningsSetup();
-
-// Określ status na podstawie pokrycia ostrzeżeniami
-$configurationStatus = 'Do skonfigurowania';
-if ($warningsStats['coverage_percent'] >= 80) {
-    $configurationStatus = 'Skonfigurowano';
-} elseif ($warningsStats['coverage_percent'] >= 50) {
-    $configurationStatus = 'Częściowo skonfigurowano';
-}
 ?>
 
 <div class="test-template-view">
+    <!-- Page Header -->
     <div class="page-header">
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
-            <h1 class="h2"><?= Html::encode($this->title) ?></h1>
-            <div class="btn-toolbar">
-                <?= Html::a('<i class="fas fa-exclamation-triangle"></i> Konfiguruj ostrzeżenia', 
-                    ['configure-warnings', 'id' => $model->id], 
-                    ['class' => 'btn btn-warning']) ?>
-                <?= Html::a('<i class="fas fa-edit"></i> Edytuj', 
-                    ['update', 'id' => $model->id], 
-                    ['class' => 'btn btn-primary']) ?>
-                <?= Html::a('<i class="fas fa-plus"></i> Nowy wynik', 
-                    ['test-result/create', 'template_id' => $model->id], 
-                    ['class' => 'btn btn-success']) ?>
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">
+                <i class="fas fa-file-medical"></i>
+                <?= Html::encode($this->title) ?>
+            </h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <?= Html::a('<i class="fas fa-edit"></i> Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+                <?= Html::a('<i class="fas fa-copy"></i> Klonuj', ['clone', 'id' => $model->id], ['class' => 'btn btn-outline-secondary']) ?>
+                <?= Html::a('<i class="fas fa-trash"></i> Usuń', ['delete', 'id' => $model->id], [
+                    'class' => 'btn btn-outline-danger',
+                    'data' => [
+                        'confirm' => 'Czy na pewno chcesz usunąć ten szablon? Ta operacja jest nieodwracalna.',
+                        'method' => 'post',
+                    ],
+                ]) ?>
             </div>
         </div>
     </div>
 
-    <!-- Alert o statusie ostrzeżeń -->
-    <?php if (!$hasCompleteSetup): ?>
-        <div class="alert alert-warning" role="alert">
-            <h6><i class="fas fa-exclamation-triangle"></i> Niekompletna konfiguracja ostrzeżeń</h6>
-            <p class="mb-2">
-                Ten szablon ma tylko <?= $warningsStats['coverage_percent'] ?>% pokrycia ostrzeżeniami. 
-                Zaleca się skonfigurowanie ostrzeżeń dla wszystkich parametrów.
-            </p>
-            <?= Html::a('<i class="fas fa-magic"></i> Skonfiguruj automatycznie', 
-                ['configure-warnings', 'id' => $model->id], 
-                ['class' => 'btn btn-sm btn-warning']) ?>
-        </div>
-    <?php else: ?>
-        <div class="alert alert-success" role="alert">
-            <i class="fas fa-check-circle"></i>
-            Szablon ma kompletnie skonfigurowane ostrzeżenia (<?= $warningsStats['coverage_percent'] ?>% pokrycia).
-        </div>
-    <?php endif; ?>
+    <div class="alert-container"></div>
 
+    <!-- Template Details -->
     <div class="row">
-        <!-- Szczegóły szablonu -->
-        <div class="col-md-8">
+        <div class="col-md-3">
             <div class="card">
                 <div class="card-header">
                     <h5><i class="fas fa-info-circle"></i> Szczegóły szablonu</h5>
                 </div>
                 <div class="card-body">
-                    <?php
-                    // Określ klasę CSS na podstawie pokrycia ostrzeżeniami
-                    $statusClass = 'text-danger fw-bold';
-                    if ($warningsStats['coverage_percent'] >= 80) {
-                        $statusClass = 'text-success fw-bold';
-                    } elseif ($warningsStats['coverage_percent'] >= 50) {
-                        $statusClass = 'text-warning fw-bold';
-                    }
-                    ?>
-                    
-                    <?= DetailView::widget([
-                        'model' => $model,
-                        'attributes' => [
-                            'name',
-                            'description:ntext',
-                        ],
-                    ]) ?>
-                </div>
-            </div>
-
-            <!-- Parametry z ostrzeżeniami -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5><i class="fas fa-flask"></i> Parametry i ostrzeżenia</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive table-with-dropdown">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Parametr</th>
-                                    <th>Typ</th>
-                                    <th>Norma</th>
-                                    <th>Ostrzeżenia</th>
-                                    <th>Status</th>
-                                    <th>Akcje</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($model->parameters as $parameter): ?>
-                                    <tr>
-                                        <td>
-                                            <strong><?= Html::encode($parameter->name) ?></strong>
-                                            <?php if ($parameter->unit): ?>
-                                                <small class="text-muted d-block">(<?= Html::encode($parameter->unit) ?>)</small>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if (!empty($parameter->norms)): ?>
-                                                <?php foreach ($parameter->norms as $norm): ?>
-                                                    <span class="badge bg-info me-1">
-                                                        <?= ucfirst($norm->type) ?>
-                                                        <?php if ($norm->is_primary): ?>
-                                                            <i class="fas fa-star text-warning ms-1" title="Norma podstawowa"></i>
-                                                        <?php endif; ?>
-                                                    </span>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <span class="badge bg-secondary">Brak norm</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if (!empty($parameter->norms)): ?>
-                                                <?php foreach ($parameter->norms as $index => $norm): ?>
-                                                    <?php if ($index > 0): ?><br><?php endif; ?>
-                                                    <div class="norm-display mb-1">
-                                                        <strong><?= Html::encode($norm->name) ?></strong>
-                                                        <?php if ($norm->type === 'range'): ?>
-                                                            <div class="small text-muted">
-                                                                <?= $norm->min_value ?> - <?= $norm->max_value ?>
-                                                                <?php if ($parameter->unit): ?>
-                                                                    <?= Html::encode($parameter->unit) ?>
-                                                                <?php endif; ?>
-                                                            </div>
-                                                        <?php elseif ($norm->type === 'single_threshold'): ?>
-                                                            <div class="small text-muted">
-                                                                <?= $norm->threshold_direction === 'above' ? '≤' : '≥' ?>
-                                                                <?= $norm->threshold_value ?>
-                                                                <?php if ($parameter->unit): ?>
-                                                                    <?= Html::encode($parameter->unit) ?>
-                                                                <?php endif; ?>
-                                                            </div>
-                                                        <?php elseif ($norm->type === 'positive_negative'): ?>
-                                                            <div class="small text-muted">Pozytywny/Negatywny</div>
-                                                        <?php elseif ($norm->type === 'multiple_thresholds'): ?>
-                                                            <div class="small text-muted">Wielokrotne progi</div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <span class="text-muted">Brak norm</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php 
-                                            $hasEnabledWarnings = false;
-                                            if (!empty($parameter->norms)) {
-                                                foreach ($parameter->norms as $norm) {
-                                                    if ($norm->warning_enabled) {
-                                                        $hasEnabledWarnings = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            ?>
-                                            <?php if ($hasEnabledWarnings): ?>
-                                                <span class="badge bg-success">
-                                                    <i class="fas fa-bell"></i> Włączone
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="badge bg-secondary">
-                                                    <i class="fas fa-bell-slash"></i> Wyłączone
-                                                </span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if (!empty($parameter->norms)): ?>
-                                                <?php if ($hasEnabledWarnings): ?>
-                                                    <span class="badge bg-success">Gotowy</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-warning">Wymaga konfiguracji</span>
-                                                <?php endif; ?>
-                                            <?php else: ?>
-                                                <span class="badge bg-danger">Brak norm</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <!-- Operacje na parametrze -->
-                                                <?= Html::a('<i class="fas fa-edit"></i>', 
-                                                    ['edit-parameter', 'id' => $model->id, 'parameterId' => $parameter->id], 
-                                                    ['class' => 'btn btn-outline-secondary btn-sm', 'title' => 'Edytuj parametr']) ?>
-                                                
-                                                <!-- Dodaj normę jeśli brak -->
-                                                <?php if (empty($parameter->norms)): ?>
-                                                    <?= Html::a('<i class="fas fa-plus"></i>', 
-                                                        ['add-norm', 'id' => $model->id, 'parameterId' => $parameter->id], 
-                                                        ['class' => 'btn btn-outline-success btn-sm', 'title' => 'Dodaj normę']) ?>
-                                                <?php endif; ?>
-                                                
-                                                <!-- Sidebar z operacjami na normach -->
-                                                <?php if (!empty($parameter->norms)): ?>
-                                                    <button type="button" class="btn btn-outline-primary btn-sm" 
-                                                            onclick="openNormsSidebar(<?= $parameter->id ?>, '<?= Html::encode($parameter->name) ?>')"
-                                                            title="Zarządzaj normami">
-                                                        <i class="fas fa-cog"></i>
-                                                    </button>
-                                                <?php endif; ?>
-                                                
-                                                <!-- Usuń parametr -->
-                                                <?= Html::a('<i class="fas fa-trash"></i>', 
-                                                    ['delete-parameter', 'id' => $model->id, 'parameterId' => $parameter->id], 
-                                                    [
-                                                        'class' => 'btn btn-outline-danger btn-sm',
-                                                        'title' => 'Usuń parametr',
-                                                        'data-method' => 'post',
-                                                        'data-confirm' => 'Czy na pewno chcesz usunąć ten parametr? Wszystkie powiązane normy również zostaną usunięte.'
-                                                    ]) ?>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-3">
-                        <?= Html::a('<i class="fas fa-plus"></i> Dodaj parametr', 
-                            ['add-parameter', 'id' => $model->id], 
-                            ['class' => 'btn btn-outline-primary']) ?>
+                    <div class="template-details">
+                        <div class="detail-item mb-3">
+                            <label class="detail-label">Nazwa badania:</label>
+                            <div class="detail-value"><?= Html::encode($model->name) ?></div>
+                        </div>
+                        
+                        <?php if (isset($model->description) && $model->description): ?>
+                            <div class="detail-item">
+                                <label class="detail-label">Opis:</label>
+                                <div class="detail-value"><?= Html::encode($model->description) ?></div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Panel boczny ze statystykami -->
-        <div class="col-md-4">
+        <div class="col-md-9">
+            <!-- Parameters Section -->
             <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-chart-pie"></i> Pokrycie ostrzeżeniami</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-list"></i> Parametry badania (<?= count($model->parameters) ?>)</h5>
+                    <div>
+                        <?php if (!empty($model->parameters)): ?>
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="bulkEnableWarnings()">
+                                <i class="fas fa-bell"></i> Włącz wszystkie ostrzeżenia
+                            </button>
+                        <?php endif; ?>
+                        <?= Html::a('<i class="fas fa-plus"></i> Dodaj parametr', 
+                            ['add-parameter', 'id' => $model->id], 
+                            ['class' => 'btn btn-success btn-sm']) ?>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <?= Progress::widget([
-                            'percent' => $warningsStats['coverage_percent'],
-                            'label' => $warningsStats['coverage_percent'] . '%',
-                            'options' => [
-                                'class' => $warningsStats['coverage_percent'] >= 80 ? 'bg-success' : 
-                                          ($warningsStats['coverage_percent'] >= 50 ? 'bg-warning' : 'bg-danger')
-                            ]
-                        ]) ?>
-                    </div>
-
-                    <div class="row text-center">
-                        <div class="col-6">
-                            <div class="stat-card p-2 mb-2 border rounded">
-                                <div class="h4 text-primary mb-0"><?= $warningsStats['total_parameters'] ?></div>
-                                <small class="text-muted">Łącznie parametrów</small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="stat-card p-2 mb-2 border rounded">
-                                <div class="h4 text-success mb-0"><?= $warningsStats['warnings_enabled'] ?></div>
-                                <small class="text-muted">Z ostrzeżeniami</small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="stat-card p-2 mb-2 border rounded">
-                                <div class="h4 text-warning mb-0"><?= $warningsStats['warnings_disabled'] ?></div>
-                                <small class="text-muted">Bez ostrzeżeń</small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="stat-card p-2 mb-2 border rounded">
-                                <div class="h4 text-danger mb-0"><?= $warningsStats['critical_parameters'] ?></div>
-                                <small class="text-muted">Krytyczne</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <?php if ($warningsStats['coverage_percent'] < 100): ?>
-                        <div class="d-grid">
-                            <?= Html::a('<i class="fas fa-magic"></i> Auto-konfiguracja', 
-                                ['configure-warnings', 'id' => $model->id], 
-                                ['class' => 'btn btn-warning btn-sm']) ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Ostatnie wyniki -->
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-chart-line"></i> Ostatnie wyniki</h5>
-                </div>
-                <div class="card-body">
-                    <?php if (!empty($model->results)): ?>
-                        <?php foreach (array_slice($model->results, 0, 5) as $result): ?>
-                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                                <div>
-                                    <small class="text-muted"><?= Yii::$app->formatter->asDate($result->test_date) ?></small>
-                                    <?php if ($result->has_abnormal_values): ?>
-                                        <span class="badge bg-danger ms-1">Nieprawidłowe</span>
-                                    <?php endif; ?>
-                                </div>
-                                <?= Html::a('<i class="fas fa-eye"></i>', 
-                                    ['test-result/view', 'id' => $result->id], 
-                                    ['class' => 'btn btn-outline-primary btn-sm']) ?>
-                            </div>
-                        <?php endforeach; ?>
-                        <div class="mt-2">
-                            <?= Html::a('Zobacz wszystkie', 
-                                ['test-result/index', 'TestResultSearch[test_template_id]' => $model->id], 
-                                ['class' => 'btn btn-outline-secondary btn-sm w-100']) ?>
+                    <?php if (empty($model->parameters)): ?>
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-plus-circle fa-3x mb-3"></i>
+                            <h5>Brak parametrów</h5>
+                            <p>Ten szablon nie ma jeszcze zdefiniowanych parametrów.</p>
+                            <?= Html::a('<i class="fas fa-plus"></i> Dodaj pierwszy parametr', 
+                                ['add-parameter', 'id' => $model->id], 
+                                ['class' => 'btn btn-primary']) ?>
                         </div>
                     <?php else: ?>
-                        <p class="text-muted mb-0">Brak wyników badań</p>
-                        <?= Html::a('<i class="fas fa-plus"></i> Dodaj pierwszy wynik', 
-                            ['test-result/create', 'template_id' => $model->id], 
-                            ['class' => 'btn btn-outline-success btn-sm w-100 mt-2']) ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Parametr</th>
+                                        <th>Jednostka</th>
+                                        <th>Normy</th>
+                                        <th>Ostrzeżenia</th>
+                                        <th>Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($model->parameters as $parameter): ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?= Html::encode($parameter->name) ?></strong>
+                                                <?php if (isset($parameter->description) && $parameter->description): ?>
+                                                    <br><small class="text-muted"><?= Html::encode($parameter->description) ?></small>
+                                                <?php endif; ?>
+                                                <?php if ($parameter->type): ?>
+                                                    <br><small class="badge badge-secondary"><?= Html::encode($parameter->type) ?></small>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?= $parameter->unit ? Html::encode($parameter->unit) : '<span class="text-muted">-</span>' ?>
+                                            </td>
+                                            <td>
+                                                <?php if (empty($parameter->norms)): ?>
+                                                    <span class="badge bg-secondary">Brak norm</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-success"><?= count($parameter->norms) ?> norm(y)</span>
+                                                    <?php if ($parameter->primaryNorm): ?>
+                                                        <br><small class="text-muted">
+                                                            Podstawowa: <?= Html::encode($parameter->primaryNorm->name) ?>
+                                                        </small>
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                $hasWarnings = false;
+                                                foreach ($parameter->norms as $norm) {
+                                                    if ($norm->warning_enabled) {
+                                                        $hasWarnings = true;
+                                                        break;
+                                                    }
+                                                }
+                                                ?>
+                                                
+                                                <?php if ($hasWarnings): ?>
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="fas fa-bell"></i> Włączone
+                                                    </span>
+                                                <?php elseif (!empty($parameter->norms)): ?>
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-bell-slash"></i> Wyłączone
+                                                    </span>
+                                                    <br>
+                                                    <button type="button" class="btn btn-outline-warning btn-xs mt-1" 
+                                                            onclick="quickEnableWarning(<?= $parameter->id ?>)">
+                                                        <i class="fas fa-bolt"></i> Włącz
+                                                    </button>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <!-- Zarządzanie normami -->
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                            onclick="openNormsSidebar(<?= $parameter->id ?>, '<?= Html::encode($parameter->name) ?>')">
+                                                        <i class="fas fa-cog"></i>
+                                                    </button>
+                                                    
+                                                    <!-- Edytuj parametr -->
+                                                    <?= Html::a('<i class="fas fa-edit"></i>', 
+                                                        ['update-parameter', 'id' => $model->id, 'parameterId' => $parameter->id], 
+                                                        ['class' => 'btn btn-outline-secondary btn-sm', 'title' => 'Edytuj parametr']) ?>
+                                                    
+                                                    <!-- Usuń parametr -->
+                                                    <?= Html::a('<i class="fas fa-trash"></i>', 
+                                                        ['delete-parameter', 'id' => $model->id, 'parameterId' => $parameter->id], 
+                                                        [
+                                                            'class' => 'btn btn-outline-danger btn-sm',
+                                                            'title' => 'Usuń parametr',
+                                                            'data-confirm' => 'Czy na pewno chcesz usunąć parametr "' . $parameter->name . '"? Ta operacja usunie również wszystkie powiązane normy.',
+                                                            'data-method' => 'post'
+                                                        ]) ?>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Sidebar for Norms Management -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<div id="normsSidebar" class="norms-sidebar">
+    <div class="sidebar-header">
+        <h5 id="sidebarTitle">Zarządzanie normami</h5>
+        <button type="button" class="btn-close" onclick="closeNormsSidebar()"></button>
+    </div>
+    <div class="sidebar-body">
+        <div id="sidebarContent">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- CSS for Sidebar -->
+<style>
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.norms-sidebar {
+    position: fixed;
+    top: 0;
+    right: -500px;
+    width: 500px;
+    height: 100%;
+    background-color: white;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1050;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+}
+
+.norms-sidebar.show {
+    right: 0;
+}
+
+.sidebar-header {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.sidebar-header h5 {
+    margin: 0;
+    flex-grow: 1;
+}
+
+.sidebar-body {
+    padding: 0;
+    height: calc(100% - 70px);
+    overflow-y: auto;
+}
+
+.btn-xs {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    border-radius: 0.2rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .norms-sidebar {
+        width: 100%;
+        right: -100%;
+    }
+}
+</style>
+
+<script>
+// Ensure MedArchive functions are available
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if main JS is loaded
+    if (typeof window.openNormsSidebar === 'undefined') {
+        console.error('MedArchive main.js not loaded properly');
+    }
+});
+</script>

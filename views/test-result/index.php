@@ -49,7 +49,24 @@ $this->params['breadcrumbs'][] = $this->title;
                         
                         $value = $resultValue->value;
                         $unit = $resultValue->parameter->unit ? ' ' . $resultValue->parameter->unit : '';
-                        $class = $resultValue->is_abnormal ? 'text-danger' : 'text-success';
+                        
+                        // Określ kolor na podstawie warning_level, nie tylko is_abnormal
+                        $class = 'text-success'; // default
+                        if ($resultValue->is_abnormal) {
+                            $class = 'text-danger';
+                        } elseif ($resultValue->warning_level) {
+                            switch ($resultValue->warning_level) {
+                                case \app\models\ParameterNorm::WARNING_LEVEL_WARNING:
+                                    $class = 'text-warning';
+                                    break;
+                                case \app\models\ParameterNorm::WARNING_LEVEL_CAUTION:
+                                    $class = 'text-info';
+                                    break;
+                                case \app\models\ParameterNorm::WARNING_LEVEL_CRITICAL:
+                                    $class = 'text-danger';
+                                    break;
+                            }
+                        }
                         
                         $values[] = '<span class="' . $class . '">' . 
                                    Html::encode($resultValue->parameter->name) . ': ' . 
@@ -69,10 +86,20 @@ $this->params['breadcrumbs'][] = $this->title;
                 'label' => 'Status',
                 'format' => 'raw',
                 'value' => function($model) {
-                    if ($model->has_abnormal_values) {
-                        return '<span class="badge bg-danger">Nieprawidłowe</span>';
+                    $status = $model->getDetailedStatus();
+                    
+                    $badge = '<span class="badge ' . $status['badge_class'] . '">';
+                    $badge .= '<i class="' . $status['icon'] . '"></i> ';
+                    $badge .= $status['message'];
+                    
+                    // Dodaj licznik ostrzeżeń jeśli są
+                    if ($status['warning_count'] > 0 && $status['status'] !== 'abnormal') {
+                        $badge .= ' (' . $status['warning_count'] . ')';
                     }
-                    return '<span class="badge bg-success">Prawidłowe</span>';
+                    
+                    $badge .= '</span>';
+                    
+                    return $badge;
                 },
                 'filter' => Html::dropDownList('TestResultSearch[has_abnormal_values]', $searchModel->has_abnormal_values, [
                     '' => 'Wszystkie',
@@ -108,11 +135,32 @@ $this->params['breadcrumbs'][] = $this->title;
                             'class' => 'btn btn-sm btn-outline-danger',
                             'title' => 'Usuń',
                             'data-confirm' => 'Czy na pewno chcesz usunąć ten wynik?',
-                            'data-method' => 'post'
+                            'data-method' => 'post',
                         ]);
-                    }
-                ]
-            ]
-        ]
-    ]) ?>
+                    },
+                ],
+            ],
+        ],
+    ]); ?>
 </div>
+
+<!-- CSS dla lepszych kolorów ostrzeżeń -->
+<style>
+.text-warning {
+    color: #fd7e14 !important;
+    font-weight: 500;
+}
+
+.text-info {
+    color: #0dcaf0 !important;
+    font-weight: 500;
+}
+
+.badge .fas {
+    font-size: 0.75em;
+}
+
+.badge.bg-warning {
+    color: #000 !important;
+}
+</style>
