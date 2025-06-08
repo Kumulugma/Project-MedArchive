@@ -21,7 +21,6 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="btn-toolbar mb-2 mb-md-0">
                 <?= Html::a('<i class="fas fa-edit"></i> Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
                 <?= Html::a('<i class="fas fa-chart-line"></i> Porównaj wyniki', ['compare', 'templateId' => $model->test_template_id], ['class' => 'btn btn-info']) ?>
-                <?= Html::a('<i class="fas fa-download"></i> Eksport PDF', ['export', 'id' => $model->id, 'format' => 'pdf'], ['class' => 'btn btn-outline-secondary']) ?>
                 <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do listy', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
             </div>
         </div>

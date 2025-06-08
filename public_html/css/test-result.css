@@ -1,44 +1,689 @@
-.test-result-form .parameter-group {
-    background-color: #f8f9fa;
-    padding: 1rem;
+/* Test Result Specific Styles */
+
+/* Porównywarka wyników */
+.test-result-compare .results-list,
+.test-result-compare .parameters-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
     border-radius: 0.375rem;
-    margin-bottom: 1rem;
-    border: 1px solid #dee2e6;
+    padding: 1rem;
 }
 
-.test-result-form .parameter-group h6 {
-    margin-bottom: 0.75rem;
-    color: #495057;
-    font-weight: 600;
+.test-result-compare .form-check {
+    transition: all 0.2s ease;
+    border-radius: 0.375rem !important;
 }
 
+.test-result-compare .form-check:hover {
+    background-color: #f8f9fa !important;
+    transform: translateX(2px);
+}
+
+.test-result-compare .form-check.selected {
+    background-color: #e3f2fd !important;
+    border-color: #2196f3 !important;
+}
+
+/* Fix dla checkboxów */
+.form-check .form-check-input {
+    margin-left: 0;
+}
+
+/* Status badges w wynikach */
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.status-badge.normal {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-badge.abnormal {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-badge.caution {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Tabela porównawcza */
 .comparison-table {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
 }
 
 .comparison-table th {
-    writing-mode: vertical-lr;
-    text-orientation: mixed;
-    min-width: 80px;
-    padding: 0.5rem 0.25rem;
+    background-color: #f8f9fa !important;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.75rem 0.5rem;
 }
 
 .comparison-table td {
-    padding: 0.25rem;
+    vertical-align: middle;
     text-align: center;
+    padding: 0.75rem 0.5rem;
+    border-right: 1px solid #f1f1f1;
 }
 
-.chart-container {
-    position: relative;
-    height: 400px;
-    margin: 2rem 0;
+.comparison-table td:first-child {
+    text-align: left;
+    background-color: #f8f9fa;
+    font-weight: 500;
+    border-right: 2px solid #dee2e6;
+    position: sticky;
+    left: 0;
+    z-index: 10;
 }
 
-.parameter-selector {
+.comparison-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.comparison-table tbody tr:hover {
+    background-color: #e3f2fd;
+}
+
+/* Wartości w tabeli */
+.result-value {
+    font-size: 1.1em;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.result-value.text-danger {
+    color: #dc3545 !important;
+}
+
+.result-value.text-warning {
+    color: #fd7e14 !important;
+}
+
+.result-value.text-info {
+    color: #17a2b8 !important;
+}
+
+.result-value.text-success {
+    color: #28a745 !important;
+}
+
+/* Wskaźniki statusu */
+.status-indicator {
+    font-size: 0.8em;
+    margin-top: 0.25rem;
+}
+
+.status-indicator i {
+    font-size: 1.1em;
+}
+
+/* Wykres */
+#chart-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.chart-controls {
     margin-bottom: 1rem;
 }
 
-.parameter-selector .form-check {
+.chart-controls .btn {
+    margin-right: 0.5rem;
+}
+
+/* Responsywność */
+@media (max-width: 768px) {
+    .comparison-table {
+        font-size: 0.8rem;
+    }
+    
+    .comparison-table th,
+    .comparison-table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .result-value {
+        font-size: 1rem;
+    }
+    
+    .test-result-compare .results-list,
+    .test-result-compare .parameters-list {
+        max-height: 300px;
+    }
+    
+    .btn-lg {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .comparison-table td:first-child {
+        position: static;
+        min-width: auto;
+    }
+    
+    .comparison-table {
+        font-size: 0.75rem;
+    }
+    
+    .badge-sm {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .btn-toolbar,
+    .card-header button,
+    #compare-form,
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+    
+    .comparison-table {
+        font-size: 10px;
+    }
+    
+    .comparison-table th,
+    .comparison-table td {
+        padding: 0.25rem;
+        border: 1px solid #ccc !important;
+    }
+    
+    .page-break {
+        page-break-before: always;
+    }
+    
+    h1, h2, h3, h4, h5 {
+        break-after: avoid;
+    }
+    
+    /* Informacje nagłówkowe dla wydruku */
+    .d-print-block {
+        display: block !important;
+        background-color: #f8f9fa !important;
+        border-bottom: 2px solid #dee2e6 !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .d-print-block h4 {
+        color: #333 !important;
+        font-weight: bold;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .d-print-block h5 {
+        color: #555 !important;
+        font-weight: normal;
+        margin-bottom: 0 !important;
+    }
+    
+    /* Tabela w wydruku */
+    .comparison-table thead th {
+        background-color: #f0f0f0 !important;
+        border: 2px solid #000 !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        padding: 0.3rem !important;
+        font-size: 9px !important;
+    }
+    
+    /* Specjalne style dla dat w nagłówkach */
+    .print-date-header {
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
+    }
+    
+    .date-header {
+        color: #000 !important;
+        font-weight: bold !important;
+        font-size: 10px !important;
+        display: block !important;
+    }
+    
+    .print-date {
+        color: #000 !important;
+        font-weight: bold !important;
+        font-size: 10px !important;
+        display: inline !important;
+    }
+    
+    /* Ukryj badge w wydruku, pokaż daty */
+    .d-print-none {
+        display: none !important;
+    }
+    
+    .d-print-inline {
+        display: inline !important;
+    }
+    
+    .comparison-table tbody td {
+        border: 1px solid #666 !important;
+        text-align: center !important;
+        padding: 0.2rem !important;
+        font-size: 8px !important;
+    }
+    
+    .comparison-table tbody td:first-child {
+        text-align: left !important;
+        background-color: #f8f8f8 !important;
+        font-weight: bold !important;
+        border-right: 2px solid #000 !important;
+        padding: 0.3rem !important;
+    }
+    
+    /* Informacje o normie w wydruku */
+    .norm-info {
+        color: #555 !important;
+        font-size: 7px !important;
+        line-height: 1.2 !important;
+        margin-top: 2px !important;
+    }
+    
+    /* Status w wydruku */
+    .print-status {
+        font-size: 12px !important;
+        color: #000 !important;
+        font-weight: bold !important;
+    }
+    
+    /* Ukryj badge kolory w druku - zostaw tylko tekst */
+    .badge {
+        background-color: transparent !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+        font-size: 7px !important;
+        padding: 1px 3px !important;
+    }
+    
+    /* Zapewnij czytelność wartości */
+    .result-value {
+        font-weight: bold !important;
+        color: #000 !important;
+        font-size: 9px !important;
+    }
+    
+    .text-danger, .text-warning, .text-info, .text-success { 
+        color: #000 !important; 
+    }
+    
+    /* Kompaktowa tabela */
+    .table-sm {
+        font-size: 8px !important;
+    }
+    
+    .table-sm th,
+    .table-sm td {
+        padding: 0.2rem !important;
+        line-height: 1.2 !important;
+    }
+}
+
+/* Scroll indicators */
+.results-list::-webkit-scrollbar,
+.parameters-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.results-list::-webkit-scrollbar-track,
+.parameters-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.results-list::-webkit-scrollbar-thumb,
+.parameters-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.results-list::-webkit-scrollbar-thumb:hover,
+.parameters-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Loading animation */
+.loading-spinner {
     display: inline-block;
-    margin-right: 1rem;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tooltips dla wartości */
+.value-tooltip {
+    cursor: help;
+    border-bottom: 1px dotted #999;
+}
+
+/* Sticky headers */
+.sticky-top {
+    position: sticky !important;
+    top: 0;
+    z-index: 1020;
+}
+
+/* Enhanced form controls */
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.form-check-input:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Card enhancements */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Button enhancements */
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Style dla wierszy z normami */
+.norm-row {
+    background-color: #f8f9fa !important;
+}
+
+.norm-row td {
+    padding-top: 0 !important;
+    padding-bottom: 0.5rem !important;
+    border-top: none !important;
+    font-size: 0.85rem;
+}
+
+/* Grupowanie parametrów */
+.comparison-table tbody tr:not(.norm-row) {
+    border-top: 2px solid #dee2e6;
+}
+
+.comparison-table tbody tr:first-child {
+    border-top: none;
+}
+
+/* Print styles for norms */
+@media print {
+    .norm-row {
+        background-color: #f5f5f5 !important;
+        page-break-inside: avoid;
+    }
+    
+    .norm-row td {
+        font-size: 7px !important;
+        padding: 1px 3px !important;
+    }
+    
+    .norm-row small {
+        line-height: 1.1;
+    }
+}
+
+/* Responsive - ukryj normy na małych ekranach */
+@media (max-width: 768px) {
+    .norm-row {
+        display: none;
+    }
+}
+
+/* Informacje o normie w kolumnie parametru */
+.norm-info {
+    font-size: 0.75rem;
+    color: #0d6efd !important;
+    font-weight: 600 !important;
+    margin-top: 0.25rem;
+    display: block;
+    line-height: 1.2;
+}
+
+.norm-info i {
+    margin-right: 0.25rem;
+    font-size: 0.7rem;
+}
+
+/* Print styles for norms */
+@media print {
+    .norm-info {
+        color: #000 !important;
+        font-size: 8px !important;
+        font-weight: bold !important;
+    }
+    
+    .norm-info i {
+        font-size: 7px !important;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .norm-info {
+        font-size: 0.7rem;
+    }
+}
+
+/* Print styles - zoptymalizowane */
+@media print {
+    /* Ukryj wszystko niepotrzebne */
+    .btn-toolbar,
+    .card-header button,
+    #compare-form,
+    .no-print,
+    .d-print-none {
+        display: none !important;
+    }
+    
+    /* Pokaż tylko wersję print */
+    .d-print-block {
+        display: block !important;
+    }
+    
+    /* Podstawowe ustawienia strony */
+    @page {
+        margin: 1.5cm;
+        size: A4;
+    }
+    
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #000;
+    }
+    
+    /* Nagłówek wydruku */
+    .print-header h2 {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 0.5cm;
+        color: #000;
+    }
+    
+    .print-header h4 {
+        font-size: 14px;
+        font-weight: normal;
+        margin-bottom: 0.5cm;
+        color: #333;
+    }
+    
+    /* Informacje o normach */
+    .norms-info {
+        border: 2px solid #000;
+        padding: 0.5cm;
+        margin-bottom: 0.5cm;
+        background-color: #f9f9f9;
+        page-break-inside: avoid;
+    }
+    
+    .norms-info h5 {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 0.3cm;
+        text-decoration: underline;
+    }
+    
+    .norm-item {
+        margin-bottom: 0.2cm;
+        font-size: 11px;
+        line-height: 1.3;
+    }
+    
+    /* Sekcje parametrów */
+    .parameter-section {
+        page-break-inside: avoid;
+        margin-bottom: 0.8cm;
+    }
+    
+    .parameter-title {
+        font-size: 15px;
+        font-weight: bold;
+        margin-bottom: 0.3cm;
+        padding-bottom: 0.1cm;
+        border-bottom: 1px solid #000;
+        color: #000;
+    }
+    
+    /* Tabela wydruku */
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0.5cm;
+        font-size: 11px;
+    }
+    
+    .print-table th {
+        background-color: #e0e0e0;
+        border: 1px solid #000;
+        padding: 0.3cm;
+        font-weight: bold;
+        font-size: 11px;
+    }
+    
+    .print-table td {
+        border: 1px solid #666;
+        padding: 0.25cm;
+        vertical-align: middle;
+    }
+    
+    .print-table .text-left {
+        text-align: left;
+    }
+    
+    .print-table .text-right {
+        text-align: right;
+    }
+    
+    .print-table .text-center {
+        text-align: center;
+    }
+    
+    /* Komórki z wartościami */
+    .value-cell {
+        font-size: 13px;
+        font-weight: bold;
+        min-width: 2cm;
+    }
+    
+    .status-cell {
+        font-size: 10px;
+        font-weight: bold;
+        min-width: 2.5cm;
+    }
+    
+    /* Wiersze z nieprawidłowymi wartościami */
+    .abnormal-row {
+        background-color: #ffe6e6 !important;
+    }
+    
+    .abnormal-row .value-cell {
+        color: #000 !important;
+        font-weight: bold;
+    }
+    
+    /* Stopka */
+    .print-footer {
+        margin-top: 1cm;
+        page-break-inside: avoid;
+    }
+    
+    .footer-info {
+        font-size: 10px;
+        color: #666;
+        text-align: center;
+    }
+    
+    /* Page breaks */
+    .parameter-section:nth-child(3n) {
+        page-break-after: always;
+    }
+    
+    /* Żeby tabele się nie łamały */
+    .print-table {
+        page-break-inside: avoid;
+    }
+    
+    .print-table tbody tr {
+        page-break-inside: avoid;
+    }
+}
+
+/* Style dla ekranu (bez zmian) */
+.print-version {
+    display: none;
+}
+
+/* Alternatywnie - ukryj breadcrumbs globalnie w wydruku */
+@media print {
+    .breadcrumb,
+    .breadcrumb-container,
+    nav[aria-label="breadcrumb"], h2, .navbar-brand {
+        display: none !important;
+    }
 }
