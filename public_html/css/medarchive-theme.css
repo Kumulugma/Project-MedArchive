@@ -1054,3 +1054,201 @@ body {
     padding: 10px;
     
 }
+
+/* Paginacja - główny kontener */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    margin: 20px 0;
+    padding: 0;
+    gap: 4px;
+}
+
+/* Elementy listy */
+.pagination li {
+    margin: 0;
+    padding: 0;
+}
+
+/* Linki i spany */
+.pagination li a,
+.pagination li span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    min-width: 40px;
+    height: 40px;
+    text-decoration: none;
+    color: #495057;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box;
+}
+
+/* Hover efekt dla aktywnych linków */
+.pagination li a:hover {
+    color: #0056b3;
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Aktywna strona */
+.pagination li.active a,
+.pagination li.active span {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.pagination li.active a:hover {
+    color: #fff;
+    background-color: #0056b3;
+    border-color: #0056b3;
+    transform: none;
+}
+
+/* Wyłączone elementy */
+.pagination li.disabled span,
+.pagination li.disabled a {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination li.disabled span:hover,
+.pagination li.disabled a:hover {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: #dee2e6;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Strzałki prev/next */
+.pagination li.prev a,
+.pagination li.next a {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+/* Responsywność - małe ekrany */
+@media (max-width: 576px) {
+    .pagination {
+        gap: 2px;
+        margin: 15px 0;
+    }
+    
+    .pagination li a,
+    .pagination li span {
+        padding: 6px 8px;
+        min-width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+    
+    /* Ukryj niektóre numery stron na małych ekranach */
+    .pagination li:not(.prev):not(.next):not(.active) {
+        display: none;
+    }
+    
+    /* Pokaż tylko aktywną i sąsiednie */
+    .pagination li.active,
+    .pagination li.active + li,
+    .pagination li.active - li {
+        display: block;
+    }
+}
+
+/* Wariant ciemny (opcjonalny) */
+.pagination.pagination-dark {
+    --bg-color: #343a40;
+    --text-color: #fff;
+    --border-color: #495057;
+    --hover-bg: #495057;
+    --active-bg: #007bff;
+    --disabled-color: #6c757d;
+}
+
+.pagination.pagination-dark li a,
+.pagination.pagination-dark li span {
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    border-color: var(--border-color);
+}
+
+.pagination.pagination-dark li a:hover {
+    background-color: var(--hover-bg);
+    border-color: var(--hover-bg);
+}
+
+.pagination.pagination-dark li.active a {
+    background-color: var(--active-bg);
+    border-color: var(--active-bg);
+}
+
+/* Wariant mały */
+.pagination.pagination-sm li a,
+.pagination.pagination-sm li span {
+    padding: 4px 8px;
+    min-width: 28px;
+    height: 28px;
+    font-size: 12px;
+}
+
+/* Wariant duży */
+.pagination.pagination-lg li a,
+.pagination.pagination-lg li span {
+    padding: 12px 16px;
+    min-width: 48px;
+    height: 48px;
+    font-size: 16px;
+}
+
+/* Animacje */
+@keyframes paginationPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pagination li.active a {
+    animation: paginationPulse 0.3s ease-in-out;
+}
+
+/* Focus states dla dostępności */
+.pagination li a:focus,
+.pagination li span:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Ulepszona responsywność dla tabletów */
+@media (max-width: 768px) and (min-width: 577px) {
+    .pagination {
+        gap: 3px;
+    }
+    
+    .pagination li a,
+    .pagination li span {
+        padding: 7px 10px;
+        min-width: 36px;
+        height: 36px;
+        font-size: 13px;
+    }
+}

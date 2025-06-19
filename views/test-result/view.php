@@ -19,6 +19,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
             <h1 class="h2"><?= Html::encode($this->title) ?></h1>
             <div class="btn-toolbar mb-2 mb-md-0">
+                <?= Html::a('<i class="fas fa-edit"></i> Wprowadź parametry', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
                 <?= Html::a('<i class="fas fa-edit"></i> Edytuj', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
                 <?= Html::a('<i class="fas fa-chart-line"></i> Porównaj wyniki', ['compare', 'templateId' => $model->test_template_id], ['class' => 'btn btn-info']) ?>
                 <?= Html::a('<i class="fas fa-arrow-left"></i> Powrót do listy', ['index'], ['class' => 'btn btn-outline-secondary']) ?>
@@ -55,6 +56,7 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
     </div>
 
+    <?php if($model->resultValues) { ?>
     <div class="mt-4">
         <h3>Wartości parametrów</h3>
         <div class="table-responsive">
@@ -185,6 +187,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </table>
         </div>
     </div>
+    <?php } ?>
 
     <!-- Rekomendacje jeśli są ostrzeżenia -->
     <?php

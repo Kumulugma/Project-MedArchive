@@ -554,3 +554,159 @@ if (typeof module !== 'undefined' && module.exports) {
         closeNormsSidebar: window.closeNormsSidebar
     };
 }
+
+// Dodaj do pliku assets/js/test-result-form.js lub podobnego
+
+$(document).ready(function() {
+    // Obsługa pól wprowadzania wartości parametrów
+    $('input[name^="parameter_"]').each(function() {
+        initializeValueInput($(this));
+    });
+});
+
+function initializeValueInput($input) {
+    // Dodaj tooltip z informacją o formatach
+    $input.attr('title', 'Można używać przecinka (5,45) lub kropki (5.45) jako separator dziesiętny');
+    
+    // Inicjalizuj tooltip
+    if (typeof bootstrap !== 'undefined') {
+        new bootstrap.Tooltip($input[0]);
+    }
+    
+    // Obsługa zmiany wartości - normalizacja w czasie rzeczywistym
+    $input.on('blur', function() {
+        normalizeInputValue($(this));
+    });
+    
+    // Walidacja podczas pisania
+    $input.on('input', function() {
+        validateInputValue($(this));
+    });
+}
+
+function normalizeInputValue($input) {
+    let value = $input.val().trim();
+    
+    if (value === '') return;
+    
+    // Zamień przecinek na kropkę
+    let normalizedValue = value.replace(',', '.');
+    
+    // Sprawdź czy to liczba
+    if (isNumeric(normalizedValue)) {
+        // Usuń wiodące zera, ale zachowaj pojedyncze zero
+        let num = parseFloat(normalizedValue);
+        
+        // Formatuj z odpowiednią liczbą miejsc po przecinku
+        if (num % 1 === 0) {
+            // Liczba całkowita
+            normalizedValue = num.toString();
+        } else {
+            // Liczba dziesiętna - zachowaj do 3 miejsc po przecinku
+            normalizedValue = num.toFixed(3).replace(/\.?0+$/, '');
+        }
+        
+        // Zastąp kropkę przecinkiem dla polskiego formatowania w wyświetleniu
+        $input.val(normalizedValue.replace('.', ','));
+        
+        // Usuń ewentualne komunikaty błędów
+        clearValidationError($input);
+    }
+}
+
+function validateInputValue($input) {
+    let value = $input.val().trim();
+    
+    if (value === '') {
+        clearValidationError($input);
+        return;
+    }
+    
+    // Sprawdź format
+    let testValue = value.replace(',', '.');
+    
+    if (!isNumeric(testValue) && !isAcceptableTextValue(value)) {
+        showValidationError($input, 'Nieprawidłowy format. Użyj liczby (np. 5,45) lub wartości tekstowej (np. ujemny).');
+    } else {
+        clearValidationError($input);
+        
+        // Jeśli jest norma, sprawdź względem niej
+        let normId = $input.closest('.parameter-row').find('select[name^="norm_"]').val();
+        if (normId && isNumeric(testValue)) {
+            validateAgainstNorm($input, testValue, normId);
+        }
+    }
+}
+
+function validateAgainstNorm($input, value, normId) {
+    $.ajax({
+        url: '/test-results/validate-value',
+        method: 'POST',
+        data: {
+            value: value,
+            normId: normId,
+            _csrf: $('meta[name=csrf-token]').attr('content')
+        },
+        success: function(response) {
+            if (response.is_normal) {
+                showValidationSuccess($input, 'Wartość w normie');
+            } else {
+                showValidationWarning($input, response.message || 'Wartość poza normą');
+            }
+        }
+    });
+}
+
+function isNumeric(value) {
+    return !isNaN(parseFloat(value)) && isFinite(value);
+}
+
+function isAcceptableTextValue(value) {
+    const acceptedValues = [
+        'ujemny', 'negatywny', 'negative', '-',
+        'dodatny', 'pozytywny', 'positive', '+',
+        'ślad', 'trace', 'tr',
+        'nieoznaczalny', 'niedostępny', 'n/a', 'nd',
+        'hemoliza', 'lipemia', 'ikteryczne',
+        'prawidłowy', 'nieprawidłowy', 'normal', 'abnormal'
+    ];
+    
+    return acceptedValues.includes(value.toLowerCase());
+}
+
+function showValidationError($input, message) {
+    clearValidationMessages($input);
+    
+    $input.addClass('is-invalid');
+    
+    let feedback = $('<div class="invalid-feedback"></div>').text(message);
+    $input.after(feedback);
+}
+
+function showValidationWarning($input, message) {
+    clearValidationMessages($input);
+    
+    $input.addClass('is-warning');
+    
+    let feedback = $('<div class="warning-feedback text-warning small"></div>').text(message);
+    $input.after(feedback);
+}
+
+function showValidationSuccess($input, message) {
+    clearValidationMessages($input);
+    
+    $input.addClass('is-valid');
+    
+    let feedback = $('<div class="valid-feedback"></div>').text(message);
+    $input.after(feedback);
+}
+
+function clearValidationError($input) {
+    $input.removeClass('is-invalid');
+    $input.siblings('.invalid-feedback').remove();
+}
+
+function clearValidationMessages($input) {
+    $input.removeClass('is-invalid is-valid is-warning');
+    $input.siblings('.invalid-feedback, .valid-feedback, .warning-feedback').remove();
+}

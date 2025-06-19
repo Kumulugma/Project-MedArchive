@@ -23,23 +23,24 @@ class ResultValue extends ActiveRecord
     }
 
     public function rules()
-    {
-        return [
-            [['test_result_id', 'parameter_id', 'value'], 'required'],
-            [['test_result_id', 'parameter_id', 'norm_id'], 'integer'],
-            [['value'], 'string', 'max' => 255],
-            [['normalized_value'], 'number'],
-            [['is_abnormal'], 'boolean'],
-            [['abnormality_type'], 'string', 'max' => 20],
-            
-            // Nowe pola dla systemu ostrzeżeń
-            [['warning_level'], 'string', 'max' => 20],
-            [['warning_message'], 'string', 'max' => 500],
-            [['distance_from_boundary'], 'number'],
-            [['is_borderline'], 'boolean'],
-            [['recommendation'], 'string'],
-        ];
-    }
+{
+    return [
+        [['test_result_id', 'parameter_id', 'value'], 'required'],
+        [['test_result_id', 'parameter_id', 'norm_id'], 'integer'],
+        [['value'], 'string', 'max' => 255],
+        [['value'], 'validateNumericValue'], // Dodana walidacja numeryczna
+        [['normalized_value'], 'number'],
+        [['is_abnormal'], 'boolean'],
+        [['abnormality_type'], 'string', 'max' => 20],
+        
+        // Nowe pola dla systemu ostrzeżeń
+        [['warning_level'], 'string', 'max' => 20],
+        [['warning_message'], 'string', 'max' => 500],
+        [['distance_from_boundary'], 'number'],
+        [['is_borderline'], 'boolean'],
+        [['recommendation'], 'string'],
+    ];
+}
 
     public function attributeLabels()
     {
@@ -77,58 +78,135 @@ class ResultValue extends ActiveRecord
         return $this->hasOne(ParameterNorm::class, ['id' => 'norm_id']);
     }
 
-    public function beforeSave($insert)
-    {
-        if (parent::beforeSave($insert)) {
-            if ($this->norm_id && $this->norm) {
-                echo "<pre style='background: #f0f0f0; padding: 10px; border: 1px solid #ccc; margin: 10px 0;'>";
-                echo "=== DEBUG RESULT VALUE ===\n";
-                echo "Parametr: " . $this->parameter->name . "\n";
-                echo "Wartość: " . $this->value . "\n";
-                echo "Norma ID: " . $this->norm_id . "\n";
-                echo "Norma: " . $this->norm->name . "\n";
-                echo "Typ normy: " . $this->norm->type . "\n";
-                
-                if ($this->norm->type === 'single_threshold') {
-                    echo "Próg: " . $this->norm->threshold_value . "\n";
-                    echo "Kierunek: " . $this->norm->threshold_direction . "\n";
-                }
-                
-                $this->normalized_value = $this->norm->normalizeValue($this->value);
-                echo "Wartość znormalizowana: " . $this->normalized_value . "\n";
-                
-                // Test podstawowej metody checkValue
-                $basicCheck = $this->norm->checkValue($this->value);
-                echo "Podstawowe sprawdzenie: " . json_encode($basicCheck, JSON_PRETTY_PRINT) . "\n";
-                
-                // Test rozszerzonej metody
-                $check = $this->norm->checkValueWithWarnings($this->value);
-                echo "Sprawdzenie z ostrzeżeniami: " . json_encode($check, JSON_PRETTY_PRINT) . "\n";
-                
-                // Ustaw wartości
-                $this->is_abnormal = !$check['is_normal'];
-                echo "is_normal z check: " . ($check['is_normal'] ? 'TRUE' : 'FALSE') . "\n";
-                echo "is_abnormal ustawione na: " . ($this->is_abnormal ? 'TRUE' : 'FALSE') . "\n";
-                
-                $this->abnormality_type = $check['type'] ?? null;
-                $this->warning_level = $check['warning_level'] ?? null;
-                $this->warning_message = $check['warning_message'] ?? null;
-                $this->distance_from_boundary = $check['distance_from_boundary'] ?? null;
-                $this->is_borderline = in_array($check['warning_level'] ?? '', [
-                    \app\models\ParameterNorm::WARNING_LEVEL_WARNING, 
-                    \app\models\ParameterNorm::WARNING_LEVEL_CAUTION
-                ]);
-                
-                echo "========================\n";
-                echo "</pre>";
-                
-                // Generuj rekomendację
-                $this->recommendation = $this->generateRecommendation($check);
+public function beforeSave($insert)
+{
+    if (parent::beforeSave($insert)) {
+        // Normalizuj wartość (zamień przecinek na kropkę)
+        $this->normalizeValue();
+        
+        if ($this->norm_id && $this->norm) {
+            // Zamiast echo, użyj Yii::debug() lub Yii::info() do logowania
+            Yii::debug("=== DEBUG RESULT VALUE ===", __METHOD__);
+            Yii::debug("Parametr: " . ($this->parameter ? $this->parameter->name : 'N/A'), __METHOD__);
+            Yii::debug("Wartość oryginalna: " . $this->value, __METHOD__);
+            Yii::debug("Norma ID: " . $this->norm_id, __METHOD__);
+            Yii::debug("Norma: " . ($this->norm ? $this->norm->name : 'N/A'), __METHOD__);
+            Yii::debug("Typ normy: " . ($this->norm ? $this->norm->type : 'N/A'), __METHOD__);
+            
+            if ($this->norm->type === 'single_threshold') {
+                Yii::debug("Próg: " . $this->norm->threshold_value, __METHOD__);
             }
-            return true;
+            
+            // Waliduj wartość względem normy
+            $this->evaluateValue();
         }
-        return false;
+        return true;
     }
+    return false;
+}
+
+/**
+ * Normalizuje wartość - zamienia przecinek na kropkę dla liczb dziesiętnych
+ */
+private function normalizeValue()
+{
+    if (!empty($this->value) && is_string($this->value)) {
+        // Usuń białe znaki z początku i końca
+        $this->value = trim($this->value);
+        
+        // Zamień przecinek na kropkę dla liczb dziesiętnych (format polski -> angielski)
+        $this->value = str_replace(',', '.', $this->value);
+        
+        // Usuń wielokrotne kropki (zachowaj tylko pierwszą)
+        if (substr_count($this->value, '.') > 1) {
+            $parts = explode('.', $this->value);
+            $this->value = $parts[0] . '.' . implode('', array_slice($parts, 1));
+        }
+        
+        // Sprawdź czy to jest poprawna liczba
+        if (is_numeric($this->value)) {
+            // Zapisz znormalizowaną wartość numeryczną dla porównań
+            $this->normalized_value = (float) $this->value;
+            
+            Yii::debug("Wartość znormalizowana: {$this->value} -> {$this->normalized_value}", __METHOD__);
+        } else {
+            // Jeśli nie można przekonwertować na liczbę, pozostaw oryginalną wartość
+            // (może to być wartość tekstowa jak "ujemny", "dodatni" itp.)
+            $this->normalized_value = null;
+            Yii::debug("Wartość tekstowa (nie numeryczna): {$this->value}", __METHOD__);
+        }
+    }
+}
+
+/**
+ * Metoda do oceny wartości (bez output debug)
+ */
+private function evaluateValue()
+{
+    if (!$this->norm) {
+        return;
+    }
+    
+    // Użyj znormalizowanej wartości jeśli jest dostępna, w przeciwnym razie oryginalnej
+    $valueToCheck = $this->normalized_value !== null ? $this->normalized_value : $this->value;
+    
+    // Sprawdź wartość względem normy
+    $result = $this->norm->checkValue($valueToCheck);
+    
+    // Ustaw flagi
+    $this->is_abnormal = !$result['is_normal'];
+    
+    if (isset($result['type'])) {
+        $this->abnormality_type = $result['type'];
+    }
+    
+    // Sprawdź ostrzeżenia jeśli dostępne
+    if (method_exists($this->norm, 'checkValueWithWarnings')) {
+        $warningResult = $this->norm->checkValueWithWarnings($valueToCheck);
+        
+        if (isset($warningResult['warning_level'])) {
+            $this->warning_level = $warningResult['warning_level'];
+        }
+        
+        if (isset($warningResult['warning_message'])) {
+            $this->warning_message = $warningResult['warning_message'];
+        }
+        
+        if (isset($warningResult['recommendation'])) {
+            $this->recommendation = $warningResult['recommendation'];
+        }
+    }
+    
+    Yii::debug("Ocena wartości: {$valueToCheck} -> abnormal: " . ($this->is_abnormal ? 'TAK' : 'NIE'), __METHOD__);
+}
+
+/**
+ * Zwraca wartość numeryczną dla obliczeń (znormalizowaną jeśli dostępna)
+ */
+public function getNumericValue()
+{
+    return $this->normalized_value !== null ? $this->normalized_value : (is_numeric($this->value) ? (float) $this->value : null);
+}
+
+/**
+ * Zwraca wartość sformatowaną do wyświetlenia (z polskim formatowaniem)
+ */
+public function getDisplayValue()
+{
+    if ($this->normalized_value !== null) {
+        // Wyświetl z przecinkiem dla lepszej czytelności w polskim kontekście
+        return str_replace('.', ',', $this->value);
+    }
+    return $this->value;
+}
+
+/**
+ * Sprawdza czy wartość jest numeryczna
+ */
+public function isNumeric()
+{
+    return $this->normalized_value !== null || is_numeric($this->value);
+}
 
     /**
      * Generuje rekomendację na podstawie wyniku sprawdzenia
@@ -240,4 +318,41 @@ class ResultValue extends ActiveRecord
             $this->testResult->updateAbnormalFlag();
         }
     }
+    
+    /**
+ * Walidacja wartości numerycznej - obsługuje format z przecinkiem
+ */
+public function validateNumericValue($attribute, $params)
+{
+    if (!empty($this->$attribute)) {
+        $value = trim($this->$attribute);
+        
+        // Zamień przecinek na kropkę dla testowania numeryczności
+        $testValue = str_replace(',', '.', $value);
+        
+        // Sprawdź czy może być to wartość numeryczna
+        if (!is_numeric($testValue) && !$this->isTextValue($value)) {
+            $this->addError($attribute, 'Wartość musi być liczbą (np. 5,45 lub 5.45) lub poprawną wartością tekstową.');
+        }
+    }
+}
+
+/**
+ * Sprawdza czy wartość jest poprawną wartością tekstową (nie numeryczną)
+ */
+private function isTextValue($value)
+{
+    // Lista akceptowanych wartości tekstowych dla badań medycznych
+    $acceptedTextValues = [
+        'ujemny', 'negatywny', 'negative', '-',
+        'dodatny', 'pozytywny', 'positive', '+',
+        'ślad', 'trace', 'tr',
+        'nieoznaczalny', 'niedostępny', 'n/a', 'nd',
+        'hemoliza', 'lipemia', 'ikteryczne',
+        'prawidłowy', 'nieprawidłowy', 'normal', 'abnormal'
+    ];
+    
+    return in_array(strtolower(trim($value)), $acceptedTextValues);
+}
+
 }

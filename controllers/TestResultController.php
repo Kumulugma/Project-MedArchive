@@ -183,26 +183,6 @@ class TestResultController extends Controller {
         ]);
     }
 
-    public function actionValidateValue() {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        $value = Yii::$app->request->post('value');
-        $normId = Yii::$app->request->post('normId');
-
-        $norm = ParameterNorm::findOne($normId);
-        if (!$norm) {
-            return ['error' => 'Norm not found'];
-        }
-
-        $result = $norm->checkValue($value);
-
-        return [
-            'is_normal' => $result['is_normal'],
-            'type' => $result['type'] ?? null,
-            'message' => $this->getValidationMessage($result),
-        ];
-    }
-
     private function getValidationMessage($result) {
         if ($result['is_normal']) {
             return 'Wartość w normie';
@@ -392,6 +372,64 @@ class TestResultController extends Controller {
             return ['success' => false, 'error' => 'Błąd podczas pobierania danych: ' . $e->getMessage()];
         }
     }
+public function actionValidateValue() {
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
+    $value = Yii::$app->request->post('value');
+    $normId = Yii::$app->request->post('normId');
+
+    // Normalizuj wartość (zamień przecinek na kropkę)
+    $normalizedValue = $this->normalizeValueForValidation($value);
+
+    $norm = ParameterNorm::findOne($normId);
+    if (!$norm) {
+        return ['error' => 'Norm not found'];
+    }
+
+    // Użyj znormalizowanej wartości do sprawdzenia
+    $result = $norm->checkValue($normalizedValue);
+
+    return [
+        'is_normal' => $result['is_normal'],
+        'type' => $result['type'] ?? null,
+        'message' => $this->getValidationMessage($result),
+        'normalized_value' => $normalizedValue, // Zwróć znormalizowaną wartość
+        'original_value' => $value // Zwróć oryginalną wartość
+    ];
+}
+
+/**
+ * Normalizuje wartość dla walidacji
+ */
+private function normalizeValueForValidation($value) {
+    if (!empty($value) && is_string($value)) {
+        // Usuń białe znaki
+        $value = trim($value);
+        
+        // Zamień przecinek na kropkę
+        $value = str_replace(',', '.', $value);
+        
+        // Jeśli to liczba, zwróć jako float, w przeciwnym razie jako string
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+    }
+    
+    return $value;
+}
+
+// Dodatkowo - można dodać funkcję pomocniczą do formularza
+public function actionGetNormalizedValue() {
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    
+    $value = Yii::$app->request->post('value');
+    $normalizedValue = $this->normalizeValueForValidation($value);
+    
+    return [
+        'original' => $value,
+        'normalized' => $normalizedValue,
+        'is_numeric' => is_numeric(str_replace(',', '.', trim($value)))
+    ];
+}
     
 }
