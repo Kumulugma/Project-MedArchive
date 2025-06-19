@@ -5,7 +5,6 @@
  * @copyright Copyright (c) 2008 Yii Software LLC
  * @license https://www.yiiframework.com/license/
  */
-
 /**
  * Message translations.
  *
@@ -145,4 +144,9 @@ return [
     '{nFormatted} {n, plural, =1{petabyte} other{petabytes}}' => '{nFormatted} {n, plural, =1{petabajt} few{petabajty} many{petabajtów} other{petabajta}}',
     '{nFormatted} {n, plural, =1{tebibyte} other{tebibytes}}' => '{nFormatted} {n, plural, =1{tebibajt} few{tebibajty} many{tebibajtów} other{tebibajta}}',
     '{nFormatted} {n, plural, =1{terabyte} other{terabytes}}' => '{nFormatted} {n, plural, =1{terabajt} few{terabajty} many{terabajtów} other{terabajta}}',
+    'Action not found.' => 'Nie znaleziono akcji.',
+    'Aliases available: {aliases}' => 'Dostępne aliasy: {aliases}',
+    'Options available: {options}' => 'Dostępne opcje: {options}',
+    '{compareAttribute} is invalid.' => '{compareAttribute} jest nieprawidłowy.',
+    'Showing <b>{begin, number}-{end, number}</b> of <b>{totalCount, number}</b> {totalCount, plural, one{item} other{items}}.' => 'Wyświetlone <b>{begin, number}-{end, number}</b> z <b>{totalCount, number}</b> {totalCount, plural, one{rekordu} few{rekordów} many{rekordów} other{rekordu}}.',
 ];

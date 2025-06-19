@@ -28,6 +28,8 @@ $this->params['breadcrumbs'][] = $this->title;
             <?php Pjax::begin(); ?>
             <?= GridView::widget([
                 'dataProvider' => $dataProvider,
+    'summary' => 'Wyświetlono <b>{begin}-{end}</b> z <b>{totalCount}</b> wpisów',
+                'emptyText' => 'Nie znaleziono wyników.',
                 'columns' => [
                     [
                         'attribute' => 'login_time',

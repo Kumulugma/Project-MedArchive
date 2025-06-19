@@ -22,6 +22,8 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
+    'summary' => 'Wyświetlono <b>{begin}-{end}</b> z <b>{totalCount}</b> wpisów',
+        'emptyText' => 'Nie znaleziono wyników.',
         'options' => ['class' => 'table-responsive'],
         'tableOptions' => ['class' => 'table table-striped table-sm'],
         'columns' => [
