@@ -136,28 +136,81 @@ class TestResultController extends Controller {
     }
 
     protected function saveResultValues($testResult, $template) {
-        $post = Yii::$app->request->post();
+    $post = Yii::$app->request->post();
+    
+    // Debug - pokaż co przyszło w POST
+    if (YII_DEBUG) {
+        Yii::debug("=== DEBUG SAVE RESULT VALUES ===", __METHOD__);
+        Yii::debug("POST data: " . json_encode($post), __METHOD__);
+    }
 
-        foreach ($template->parameters as $parameter) {
-            $valueKey = 'parameter_' . $parameter->id;
-            $normKey = 'norm_' . $parameter->id;
+    $savedCount = 0;
+    $errorCount = 0;
+    
+    foreach ($template->parameters as $parameter) {
+        $valueKey = 'parameter_' . $parameter->id;
+        $normKey = 'norm_' . $parameter->id;
 
-            if (isset($post[$valueKey]) && $post[$valueKey] !== '') {
-                $resultValue = new ResultValue();
-                $resultValue->test_result_id = $testResult->id;
-                $resultValue->parameter_id = $parameter->id;
-                $resultValue->value = $post[$valueKey];
+        if (isset($post[$valueKey]) && $post[$valueKey] !== '') {
+            $resultValue = new ResultValue();
+            $resultValue->test_result_id = $testResult->id;
+            $resultValue->parameter_id = $parameter->id;
+            $resultValue->value = trim($post[$valueKey]); // Usuń białe znaki
 
-                if (isset($post[$normKey]) && $post[$normKey] !== '') {
-                    $resultValue->norm_id = $post[$normKey];
+            if (isset($post[$normKey]) && $post[$normKey] !== '') {
+                $resultValue->norm_id = $post[$normKey];
+            }
+
+            if (YII_DEBUG) {
+                Yii::debug("Próba zapisu wartości dla parametru {$parameter->name}: '{$resultValue->value}'", __METHOD__);
+                if ($resultValue->norm_id) {
+                    Yii::debug("Norma ID: {$resultValue->norm_id}", __METHOD__);
                 }
+            }
 
-                $resultValue->save();
+            if ($resultValue->save()) {
+                $savedCount++;
+                if (YII_DEBUG) {
+                    Yii::debug("✓ Zapisano wartość ID: {$resultValue->id}", __METHOD__);
+                }
+            } else {
+                $errorCount++;
+                $errors = implode(', ', $resultValue->getFirstErrors());
+                
+                if (YII_DEBUG) {
+                    Yii::debug("✗ Błąd zapisu dla parametru {$parameter->name}: {$errors}", __METHOD__);
+                }
+                
+                // Wyświetl błąd w flash message
+                Yii::$app->session->setFlash('error', 
+                    "Błąd zapisu wartości dla parametru '{$parameter->name}': {$errors}"
+                );
+            }
+        } else {
+            if (YII_DEBUG) {
+                Yii::debug("Pominięto parametr {$parameter->name} - brak wartości", __METHOD__);
             }
         }
+    }
 
+    if (YII_DEBUG) {
+        Yii::debug("Podsumowanie: zapisano {$savedCount}, błędów {$errorCount}", __METHOD__);
+    }
+
+    // Aktualizuj flagę tylko jeśli coś zostało zapisane
+    if ($savedCount > 0) {
         $testResult->updateAbnormalFlag();
     }
+    
+    // Pokaż informację o wyniku
+    if ($savedCount > 0) {
+        Yii::$app->session->setFlash('success', "Zapisano {$savedCount} wartości parametrów.");
+    }
+    
+    if ($errorCount > 0) {
+        Yii::$app->session->setFlash('warning', "Wystąpiły błędy przy zapisie {$errorCount} wartości.");
+    }
+}
 
     protected function findModel($id) {
         if (($model = TestResult::findOne($id)) !== null) {

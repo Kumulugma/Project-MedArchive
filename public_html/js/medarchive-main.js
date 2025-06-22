@@ -437,17 +437,23 @@ window.toggleNormFields = function(type) {
     // Show specific fields based on type
     switch(type) {
         case 'positive_negative':
+            console.log('Showing positive-negative fields');
             $('#positive-negative-fields').show();
             break;
         case 'range':
+            console.log('Showing range fields');
             $('#range-fields').show();
             break;
         case 'single_threshold':
+            console.log('Showing single-threshold fields');
             $('#single-threshold-fields').show();
             break;
         case 'multiple_thresholds':
+            console.log('Showing multiple-thresholds fields');
             $('#multiple-thresholds-fields').show();
             break;
+        default:
+            console.log('Unknown norm type:', type);
     }
     
     // Update zones preview if function exists
@@ -622,21 +628,37 @@ function validateInputValue($input) {
         return;
     }
     
-    // Sprawdź format
+    // Sprawdź typ parametru
+    let parameterType = $input.data('parameter-type');
+    let normType = $input.data('norm-type');
+    
+    // WYŁĄCZ walidację dla:
+    // 1. Parametrów typu TEXT
+    // 2. Norm typu positive_negative  
+    // 3. Jeśli nie ma określonego typu (bezpieczna opcja)
+    if (parameterType === 'text' || 
+        normType === 'positive_negative' || 
+        !parameterType) {
+        clearValidationError($input);
+        return; // Nie waliduj - backend zajmie się sprawdzeniem
+    }
+    
+    // Tylko dla parametrów z określonym typem numerycznym sprawdzaj format
     let testValue = value.replace(',', '.');
     
-    if (!isNumeric(testValue) && !isAcceptableTextValue(value)) {
-        showValidationError($input, 'Nieprawidłowy format. Użyj liczby (np. 5,45) lub wartości tekstowej (np. ujemny).');
+    if (!isNumeric(testValue)) {
+        showValidationError($input, 'Wartość musi być liczbą (np. 5,45 lub 5.45).');
     } else {
         clearValidationError($input);
         
-        // Jeśli jest norma, sprawdź względem niej
-        let normId = $input.closest('.parameter-row').find('select[name^="norm_"]').val();
-        if (normId && isNumeric(testValue)) {
+        // Sprawdź względem normy jeśli dostępna
+        let normId = $input.data('norm-id');
+        if (normId) {
             validateAgainstNorm($input, testValue, normId);
         }
     }
 }
+
 
 function validateAgainstNorm($input, value, normId) {
     $.ajax({

@@ -586,4 +586,38 @@ public function actionUpdateNorm($id, $parameterId, $normId) {
 
         throw new NotFoundHttpException('Szablon badania nie został znaleziony.');
     }
+    
+    /**
+ * Pobiera informacje o normie (AJAX endpoint)
+ */
+public function actionGetNormInfo()
+{
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    
+    if (!$this->request->isGet) {
+        return ['success' => false, 'message' => 'Nieprawidłowa metoda żądania.'];
+    }
+    
+    $normId = $this->request->get('normId');
+    
+    if (!$normId) {
+        return ['success' => false, 'message' => 'Brak ID normy.'];
+    }
+    
+    $norm = \app\models\ParameterNorm::findOne($normId);
+    
+    if (!$norm) {
+        return ['success' => false, 'message' => 'Norma nie została znaleziona.'];
+    }
+    
+    return [
+        'success' => true,
+        'norm' => [
+            'id' => $norm->id,
+            'name' => $norm->name,
+            'type' => $norm->type,
+            'range_text' => $norm->getRangeText(),
+        ]
+    ];
+}
 }

@@ -142,33 +142,119 @@ class ParameterNorm extends ActiveRecord
      * Walidacja konfiguracji progów dla typu multiple_thresholds
      */
     public function validateThresholdsConfig($attribute, $params)
-    {
-        if ($this->type !== self::TYPE_MULTIPLE_THRESHOLDS) {
-            return;
-        }
+{
+    if ($this->type !== self::TYPE_MULTIPLE_THRESHOLDS) {
+        return;
+    }
 
-        if (empty($this->$attribute)) {
-            $this->addError($attribute, 'Konfiguracja progów jest wymagana dla typu "wiele progów".');
-            return;
-        }
+    if (empty($this->$attribute)) {
+        $this->addError($attribute, 'Konfiguracja progów jest wymagana dla typu "wiele progów".');
+        return;
+    }
 
-        $config = json_decode($this->$attribute, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->addError($attribute, 'Nieprawidłowy format JSON konfiguracji progów.');
-            return;
-        }
+    $config = json_decode($this->$attribute, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $this->addError($attribute, 'Konfiguracja progów musi być prawidłowym JSON.');
+        return;
+    }
 
-        if (!is_array($config) || empty($config)) {
-            $this->addError($attribute, 'Konfiguracja progów musi zawierać przynajmniej jeden próg.');
-            return;
-        }
+    if (!is_array($config) || empty($config)) {
+        $this->addError($attribute, 'Konfiguracja progów musi zawierać dane konfiguracyjne.');
+        return;
+    }
 
-        foreach ($config as $index => $threshold) {
-            if (!isset($threshold['value']) || !is_numeric($threshold['value'])) {
-                $this->addError($attribute, "Próg #{$index}: Wartość jest wymagana i musi być liczbą.");
-            }
+    // Sprawdź typ konfiguracji
+    $measurementType = $config['measurement_type'] ?? null;
+    
+    if ($measurementType === 'hydrogen_breath_test') {
+        // Walidacja dla testu oddechowego
+        $this->validateBreathTestConfig($config, $attribute);
+    } elseif ($measurementType === 'standard_thresholds') {
+        // Walidacja dla standardowych progów
+        $this->validateStandardThresholdsConfig($config, $attribute);
+    } else {
+        // Stara walidacja dla kompatybilności wstecznej
+        $this->validateLegacyThresholdsConfig($config, $attribute);
+    }
+}
+
+/**
+ * Waliduje konfigurację testu oddechowego
+ */
+private function validateBreathTestConfig($config, $attribute)
+{
+    // Sprawdź wymagane pola
+    if (!isset($config['max_increase']) || !is_numeric($config['max_increase'])) {
+        $this->addError($attribute, 'Test oddechowy: pole "max_increase" jest wymagane i musi być liczbą.');
+        return;
+    }
+    
+    if ($config['max_increase'] <= 0) {
+        $this->addError($attribute, 'Test oddechowy: maksymalny wzrost musi być większy od 0.');
+        return;
+    }
+    
+    // Sprawdź interpretację
+    if (!isset($config['interpretation']) || !is_array($config['interpretation'])) {
+        $this->addError($attribute, 'Test oddechowy: pole "interpretation" jest wymagane.');
+        return;
+    }
+    
+    if (!isset($config['interpretation']['normal']) || !isset($config['interpretation']['abnormal'])) {
+        $this->addError($attribute, 'Test oddechowy: interpretacja musi zawierać pola "normal" i "abnormal".');
+        return;
+    }
+}
+
+/**
+ * Waliduje konfigurację standardowych progów
+ */
+private function validateStandardThresholdsConfig($config, $attribute)
+{
+    if (!isset($config['thresholds']) || !is_array($config['thresholds']) || empty($config['thresholds'])) {
+        $this->addError($attribute, 'Standardowe progi: pole "thresholds" musi zawierać przynajmniej jeden próg.');
+        return;
+    }
+
+    foreach ($config['thresholds'] as $index => $threshold) {
+        if (!isset($threshold['value']) || !is_numeric($threshold['value'])) {
+            $this->addError($attribute, "Standardowe progi: próg #{$index} - wartość jest wymagana i musi być liczbą.");
+        }
+        
+        if (!isset($threshold['is_normal'])) {
+            $this->addError($attribute, "Standardowe progi: próg #{$index} - pole 'is_normal' jest wymagane.");
         }
     }
+}
+
+/**
+ * Waliduje starą konfigurację progów (kompatybilność wsteczna)
+ */
+private function validateLegacyThresholdsConfig($config, $attribute)
+{
+    // Sprawdź czy to stara struktura z bezpośrednią tablicą progów
+    if (isset($config['thresholds']) && is_array($config['thresholds'])) {
+        $this->validateStandardThresholdsConfig($config, $attribute);
+        return;
+    }
+    
+    // Sprawdź czy to bezpośrednia tablica progów
+    if (is_array($config) && !empty($config)) {
+        $firstElement = reset($config);
+        if (is_array($firstElement) && isset($firstElement['value'])) {
+            // To wygląda jak tablica progów
+            foreach ($config as $index => $threshold) {
+                if (!isset($threshold['value']) || !is_numeric($threshold['value'])) {
+                    $this->addError($attribute, "Próg #{$index}: Wartość jest wymagana i musi być liczbą.");
+                }
+            }
+            return;
+        }
+    }
+    
+    // Jeśli nic nie pasuje
+    $this->addError($attribute, 'Nierozpoznany format konfiguracji progów.');
+}
 
     /**
      * Normalizuje wartość przy użyciu współczynników konwersji
@@ -186,38 +272,42 @@ class ParameterNorm extends ActiveRecord
      * Podstawowe sprawdzanie wartości względem normy
      */
     public function checkValue($value)
-    {
-        if (!is_numeric($value)) {
+{
+    // Dla typu positive_negative ZAWSZE sprawdzaj wartość tekstową
+    if ($this->type === self::TYPE_POSITIVE_NEGATIVE) {
+        return $this->checkPositiveNegativeValue($value);
+    }
+
+    // Dla pozostałych typów wartość musi być numeryczna
+    if (!is_numeric($value)) {
+        return [
+            'is_normal' => false,
+            'type' => 'invalid_value',
+            'message' => 'Wartość nie jest liczbą'
+        ];
+    }
+
+    // Normalizuj wartość numeryczną
+    $normalizedValue = $this->normalizeValue($value);
+
+    switch ($this->type) {
+        case self::TYPE_RANGE:
+            return $this->checkRangeValue($normalizedValue);
+        
+        case self::TYPE_SINGLE_THRESHOLD:
+            return $this->checkThresholdValue($normalizedValue);
+        
+        case self::TYPE_MULTIPLE_THRESHOLDS:
+            return $this->checkMultipleThresholdsValue($normalizedValue);
+        
+        default:
             return [
                 'is_normal' => false,
-                'type' => 'invalid_value',
-                'message' => 'Wartość nie jest liczbą'
+                'type' => 'unknown_type',
+                'message' => 'Nieznany typ normy'
             ];
-        }
-
-        $normalizedValue = $this->normalizeValue($value);
-
-        switch ($this->type) {
-            case self::TYPE_POSITIVE_NEGATIVE:
-                return $this->checkPositiveNegativeValue($normalizedValue);
-            
-            case self::TYPE_RANGE:
-                return $this->checkRangeValue($normalizedValue);
-            
-            case self::TYPE_SINGLE_THRESHOLD:
-                return $this->checkThresholdValue($normalizedValue);
-            
-            case self::TYPE_MULTIPLE_THRESHOLDS:
-                return $this->checkMultipleThresholdsValue($normalizedValue);
-            
-            default:
-                return [
-                    'is_normal' => false,
-                    'type' => 'unknown_type',
-                    'message' => 'Nieznany typ normy'
-                ];
-        }
     }
+}
 
     /**
      * Rozszerzone sprawdzanie wartości z systemem ostrzeżeń
@@ -245,18 +335,38 @@ class ParameterNorm extends ActiveRecord
      * Sprawdza wartość typu pozytywny/negatywny
      */
     private function checkPositiveNegativeValue($value)
-    {
-        $normalizedValue = strtolower(trim($value));
-        $negativeValues = ['negatywny', 'negative', 'ujemny', 'nie', 'no', 'false', '0', '-'];
-        
-        $isNormal = in_array($normalizedValue, $negativeValues);
-        
+{
+    $normalizedValue = strtolower(trim($value));
+    
+    // Rozszerzona lista wartości negatywnych (normalnych)
+    $negativeValues = [
+        'negatywny', 'negative', 'ujemny', 'nie', 'no', 'false', '0', '-', 'neg',
+        'nieobecny', 'absent', 'niereaktywny', 'non-reactive', 'nonreactive'
+    ];
+    
+    // Lista wartości pozytywnych (nieprawidłowych)
+    $positiveValues = [
+        'pozytywny', 'positive', 'dodatny', 'tak', 'yes', 'true', '1', '+', 'pos',
+        'obecny', 'present', 'reaktywny', 'reactive'
+    ];
+    
+    $isNormal = in_array($normalizedValue, $negativeValues);
+    
+    // Sprawdź czy wartość jest w ogóle rozpoznawalna
+    if (!in_array($normalizedValue, array_merge($negativeValues, $positiveValues))) {
         return [
-            'is_normal' => $isNormal,
-            'type' => $isNormal ? 'negative' : 'positive',
-            'message' => $isNormal ? 'Wynik negatywny - normalny' : 'Wynik pozytywny - nieprawidłowy'
+            'is_normal' => false,
+            'type' => 'unrecognized_value',
+            'message' => 'Nierozpoznana wartość dla normy pozytywny/negatywny'
         ];
     }
+    
+    return [
+        'is_normal' => $isNormal,
+        'type' => $isNormal ? 'negative' : 'positive',
+        'message' => $isNormal ? 'Wynik negatywny - normalny' : 'Wynik pozytywny - nieprawidłowy'
+    ];
+}
 
     /**
      * Sprawdza wartość typu zakres
@@ -313,48 +423,143 @@ class ParameterNorm extends ActiveRecord
      * Sprawdza wartość typu wiele progów
      */
     private function checkMultipleThresholdsValue($value)
-    {
-        if (empty($this->thresholds_config)) {
-            return [
-                'is_normal' => false,
-                'type' => 'no_config',
-                'message' => 'Brak konfiguracji progów'
-            ];
-        }
-
-        $thresholds = json_decode($this->thresholds_config, true);
-        if (!$thresholds) {
-            return [
-                'is_normal' => false,
-                'type' => 'invalid_config',
-                'message' => 'Nieprawidłowa konfiguracja progów'
-            ];
-        }
-
-        // Sortuj progi według wartości
-        usort($thresholds, function($a, $b) {
-            return $a['value'] <=> $b['value'];
-        });
-
-        foreach ($thresholds as $threshold) {
-            if ($value <= $threshold['value']) {
-                $isNormal = isset($threshold['is_normal']) ? $threshold['is_normal'] : false;
-                return [
-                    'is_normal' => $isNormal,
-                    'type' => 'threshold_' . $threshold['value'],
-                    'message' => $threshold['label'] ?? 'Próg ' . $threshold['value']
-                ];
-            }
-        }
-
-        // Wartość powyżej wszystkich progów
-        $lastThreshold = end($thresholds);
+{
+    if (empty($this->thresholds_config)) {
         return [
             'is_normal' => false,
-            'type' => 'above_all_thresholds',
-            'message' => 'Wartość powyżej wszystkich progów'
+            'type' => 'no_config',
+            'message' => 'Brak konfiguracji progów'
         ];
     }
+
+    $config = json_decode($this->thresholds_config, true);
+    if (!$config) {
+        return [
+            'is_normal' => false,
+            'type' => 'invalid_config',
+            'message' => 'Nieprawidłowa konfiguracja progów'
+        ];
+    }
+
+    // Sprawdź czy to test oddechowy z baseline
+    if (isset($config['measurement_type']) && $config['measurement_type'] === 'hydrogen_breath_test') {
+        return $this->checkBreathTestValues($value, $config);
+    }
+
+    // Standardowa logika progów (zachowana kompatybilność)
+    return $this->checkStandardThresholds($value, $config);
+}
+
+/**
+ * Nowa metoda sprawdzania testu oddechowego
+ */
+private function checkBreathTestValues($value, $config)
+{
+    // $value format: "34.0;65.0;53.0;62.0;79.0" (baseline;30min;60min;120min;180min)
+    $values = explode(';', $value);
+    
+    if (count($values) < 2) {
+        return [
+            'is_normal' => false,
+            'type' => 'insufficient_data',
+            'message' => 'Test oddechowy wymaga co najmniej 2 pomiarów'
+        ];
+    }
+
+    $baseline = floatval($values[0]);
+    $timePoints = [30, 60, 120, 180]; // minuty
+    $maxIncrease = $config['max_increase'] ?? 12; // domyślnie 12 ppm
+    
+    $abnormalResults = [];
+    $allResults = [];
+
+    for ($i = 1; $i < count($values) && $i <= count($timePoints); $i++) {
+        $currentValue = floatval($values[$i]);
+        $increase = $currentValue - $baseline;
+        $isNormal = $increase <= $maxIncrease;
+        $timePoint = $timePoints[$i - 1];
+        
+        $allResults[] = [
+            'time_point' => $timePoint,
+            'value' => $currentValue,
+            'baseline' => $baseline,
+            'increase' => round($increase, 1),
+            'max_allowed_increase' => $maxIncrease,
+            'is_normal' => $isNormal,
+            'description' => "Czas {$timePoint} min"
+        ];
+        
+        if (!$isNormal) {
+            $abnormalResults[] = [
+                'time_point' => $timePoint,
+                'increase' => round($increase, 1),
+                'max_allowed' => $maxIncrease
+            ];
+        }
+    }
+
+    $isOverallNormal = empty($abnormalResults);
+    
+    if ($isOverallNormal) {
+        $message = $config['interpretation']['normal'] ?? 'Brak nietolerancji laktozy';
+    } else {
+        $message = $config['interpretation']['abnormal'] ?? 'Nietolerancja laktozy potwierdzona';
+        $details = [];
+        foreach ($abnormalResults as $abnormal) {
+            $details[] = "Czas {$abnormal['time_point']}min: +{$abnormal['increase']} ppm (max +{$abnormal['max_allowed']} ppm)";
+        }
+        $message .= " - " . implode(', ', $details);
+    }
+
+    return [
+        'is_normal' => $isOverallNormal,
+        'type' => $isOverallNormal ? 'breath_test_normal' : 'breath_test_abnormal',
+        'message' => $message,
+        'detailed_results' => $allResults,
+        'abnormal_points' => $abnormalResults,
+        'baseline_value' => $baseline
+    ];
+}
+
+/**
+ * Standardowa logika progów (zachowana kompatybilność)
+ */
+private function checkStandardThresholds($value, $config)
+{
+    if (!isset($config['thresholds']) || !is_array($config['thresholds'])) {
+        return [
+            'is_normal' => false,
+            'type' => 'invalid_config',
+            'message' => 'Nieprawidłowa konfiguracja progów'
+        ];
+    }
+
+    $thresholds = $config['thresholds'];
+    
+    // Sortuj progi według wartości
+    usort($thresholds, function($a, $b) {
+        return ($a['value'] ?? 0) <=> ($b['value'] ?? 0);
+    });
+
+    foreach ($thresholds as $threshold) {
+        if ($value <= ($threshold['value'] ?? 0)) {
+            $isNormal = isset($threshold['is_normal']) ? $threshold['is_normal'] : false;
+            return [
+                'is_normal' => $isNormal,
+                'type' => 'threshold_' . ($threshold['label'] ?? 'unlabeled'),
+                'message' => $threshold['description'] ?? ($isNormal ? 'Wartość w normie' : 'Wartość poza normą')
+            ];
+        }
+    }
+
+    // Wartość przekracza wszystkie progi
+    $lastThreshold = end($thresholds);
+    return [
+        'is_normal' => false,
+        'type' => 'above_all_thresholds',
+        'message' => 'Wartość przekracza wszystkie zdefiniowane progi'
+    ];
+}
 
     /**
      * Oblicza poziom ostrzeżenia dla podanej wartości

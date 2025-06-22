@@ -122,10 +122,102 @@ $actionUrl = $isUpdate
 
                     <!-- Pola specyficzne dla typu "multiple_thresholds" -->
                     <div id="multiple-thresholds-fields" style="display: none;">
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Wiele progów:</strong> Funkcjonalność w rozwoju. 
-                            Zalecamy użycie typu "zakres" lub "pojedynczy próg".
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Wiele progów:</strong> 
+                            Definiuj różne progi wartości z własną interpretacją dla każdego zakresu.
+                        </div>
+                        
+                        <!-- Wybór typu konfiguracji -->
+                        <div class="mb-3">
+                            <label class="form-label">Typ konfiguracji</label>
+                            <select class="form-control" id="threshold-config-type" onchange="toggleThresholdConfigType(this.value)">
+                                <option value="">Wybierz typ...</option>
+                                <option value="breath_test">Test oddechowy (nietolerancja laktozy)</option>
+                                <option value="standard">Standardowe progi wartości</option>
+                                <option value="custom">Własna konfiguracja JSON</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Konfiguracja dla testu oddechowego -->
+                        <div id="breath-test-config" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Maksymalny wzrost (ppm)</label>
+                                    <input type="number" step="0.1" class="form-control" id="breath-test-max-increase" 
+                                           value="12" placeholder="12.0">
+                                    <small class="text-muted">Domyślnie 12 ppm dla wodoru, 3 ppm dla metanu</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Typ gazu</label>
+                                    <select class="form-control" id="breath-test-gas-type">
+                                        <option value="hydrogen">Wodór (H₂)</option>
+                                        <option value="methane">Metan (CH₄)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="generateBreathTestConfig()">
+                                    <i class="fas fa-magic"></i> Generuj konfigurację testu oddechowego
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Konfiguracja standardowych progów -->
+                        <div id="standard-thresholds-config" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">Progi wartości</label>
+                                <div id="thresholds-container">
+                                    <div class="threshold-item border rounded p-3 mb-2">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label small">Wartość progu</label>
+                                                <input type="number" step="0.01" class="form-control form-control-sm threshold-value" placeholder="0.0">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small">Normalny?</label>
+                                                <select class="form-control form-control-sm threshold-normal">
+                                                    <option value="true">Tak - normalny</option>
+                                                    <option value="false">Nie - nieprawidłowy</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Opis</label>
+                                                <input type="text" class="form-control form-control-sm threshold-description" placeholder="Opis tego progu">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label small">&nbsp;</label>
+                                                <button type="button" class="btn btn-danger btn-sm d-block" onclick="removeThreshold(this)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-success btn-sm" onclick="addThreshold()">
+                                    <i class="fas fa-plus"></i> Dodaj próg
+                                </button>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="generateStandardConfig()">
+                                    <i class="fas fa-magic"></i> Generuj konfigurację progów
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Pole na konfigurację JSON -->
+                        <div class="mb-3">
+                            <?= $form->field($norm, 'thresholds_config')->textarea([
+                                'rows' => 8,
+                                'id' => 'thresholds-config-json',
+                                'placeholder' => 'Konfiguracja JSON zostanie wygenerowana automatycznie...',
+                                'class' => 'form-control font-monospace'
+                            ])->label('Konfiguracja JSON') ?>
+                            <small class="text-muted">
+                                Możesz edytować konfigurację ręcznie lub użyć generatorów powyżej.
+                            </small>
                         </div>
                     </div>
 
@@ -167,83 +259,35 @@ $actionUrl = $isUpdate
                                     ])->hint('Margines uwagi w procentach (np. 5%)') ?>
                                 </div>
                             </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <?= $form->field($norm, 'warning_margin_absolute')->textInput([
-                                        'type' => 'number',
-                                        'min' => 0,
-                                        'step' => 'any',
-                                        'placeholder' => '0.5'
-                                    ])->hint('Alternatywnie: margines jako wartość bezwzględna') ?>
-                                </div>
-                                <div class="col-md-6">
-                                    <?= $form->field($norm, 'caution_margin_absolute')->textInput([
-                                        'type' => 'number',
-                                        'min' => 0,
-                                        'step' => 'any',
-                                        'placeholder' => '0.2'
-                                    ])->hint('Alternatywnie: margines jako wartość bezwzględna') ?>
-                                </div>
-                            </div>
-
-                            <!-- Wartości optymalne -->
-                            <div class="mt-3">
-                                <h6><i class="fas fa-target"></i> Wartości optymalne (opcjonalne)</h6>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <?= $form->field($norm, 'optimal_min_value')->textInput([
-                                            'type' => 'number',
-                                            'step' => 'any',
-                                            'placeholder' => 'np. 4.0'
-                                        ])->hint('Dolna granica optymalnego zakresu') ?>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <?= $form->field($norm, 'optimal_max_value')->textInput([
-                                            'type' => 'number',
-                                            'step' => 'any',
-                                            'placeholder' => 'np. 4.8'
-                                        ])->hint('Górna granica optymalnego zakresu') ?>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
-                    <!-- Współczynniki konwersji (zaawansowane) -->
+                    <!-- Sekcja konwersji jednostek -->
                     <div class="mt-4 pt-3 border-top">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6><i class="fas fa-calculator"></i> Konwersja jednostek (zaawansowane)</h6>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                    onclick="$('#conversion-fields').toggle()">
-                                <i class="fas fa-eye"></i> Pokaż/Ukryj
-                            </button>
+                        <h6><i class="fas fa-exchange-alt"></i> Konwersja jednostek (zaawansowane)</h6>
+                        
+                        <div class="alert alert-secondary">
+                            <small>
+                                <i class="fas fa-info-circle"></i>
+                                Konwersja pozwala na przeliczanie wartości między jednostkami.
+                                Wzór: <code>wartość_docelowa = (wartość_wejściowa × współczynnik) + przesunięcie</code>
+                            </small>
                         </div>
 
-                        <div id="conversion-fields" style="display: none;">
-                            <div class="alert alert-secondary">
-                                <small>
-                                    <i class="fas fa-info-circle"></i>
-                                    Używaj tylko jeśli musisz konwertować jednostki przed porównaniem z normą.
-                                    Formuła: wartość_znormalizowana = (wartość × współczynnik) + offset
-                                </small>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <?= $form->field($norm, 'conversion_factor')->textInput([
+                                    'type' => 'number',
+                                    'step' => 'any',
+                                    'value' => $norm->conversion_factor ?: 1
+                                ])->hint('Domyślnie: 1 (bez konwersji)') ?>
                             </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <?= $form->field($norm, 'conversion_factor')->textInput([
-                                        'type' => 'number',
-                                        'step' => 'any',
-                                        'value' => $norm->conversion_factor ?: 1
-                                    ])->hint('Domyślnie: 1 (bez konwersji)') ?>
-                                </div>
-                                <div class="col-md-6">
-                                    <?= $form->field($norm, 'conversion_offset')->textInput([
-                                        'type' => 'number',
-                                        'step' => 'any',
-                                        'value' => $norm->conversion_offset ?: 0
-                                    ])->hint('Domyślnie: 0 (bez przesunięcia)') ?>
-                                </div>
+                            <div class="col-md-6">
+                                <?= $form->field($norm, 'conversion_offset')->textInput([
+                                    'type' => 'number',
+                                    'step' => 'any',
+                                    'value' => $norm->conversion_offset ?: 0
+                                ])->hint('Domyślnie: 0 (bez przesunięcia)') ?>
                             </div>
                         </div>
                     </div>
@@ -285,16 +329,17 @@ $actionUrl = $isUpdate
             </div>
         </div>
 
-        <!-- Podgląd stref norm (prawa kolumna) -->
+        <!-- Sidebar z pomocą i podglądem -->
         <div class="col-md-4">
-            <div class="card">
+            <!-- Podgląd strefy normy -->
+            <div class="card mb-3">
                 <div class="card-header">
                     <h6 class="card-title mb-0">
-                        <i class="fas fa-chart-bar"></i> Podgląd stref
+                        <i class="fas fa-eye"></i> Podgląd strefy normy
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div id="zones-preview" class="zones-visualization">
+                    <div id="zones-preview">
                         <div class="text-muted text-center py-3">
                             <i class="fas fa-info-circle"></i>
                             <p class="small mb-0">Wybierz typ normy aby zobaczyć podgląd stref</p>
@@ -303,8 +348,28 @@ $actionUrl = $isUpdate
                 </div>
             </div>
 
+            <!-- Pomoc contextowa -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-question-circle"></i> Pomoc
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <p><strong>Typy norm:</strong></p>
+                        <ul class="ps-3">
+                            <li><strong>Pozytywny/Negatywny</strong> - dla testów jakościowych</li>
+                            <li><strong>Zakres</strong> - wartość między min a max</li>
+                            <li><strong>Próg</strong> - wartość powyżej/poniżej granicy</li>
+                            <li><strong>Wiele progów</strong> - różne zakresy z interpretacją</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <!-- Przykłady -->
-            <div class="card mt-3">
+            <div class="card">
                 <div class="card-header">
                     <h6 class="card-title mb-0">
                         <i class="fas fa-lightbulb"></i> Przykłady
@@ -314,15 +379,19 @@ $actionUrl = $isUpdate
                     <div class="btn-group-vertical w-100" role="group">
                         <button type="button" class="btn btn-outline-info btn-sm" 
                                 onclick="setExampleRange()">
-                            Hemoglobina (12-16 g/dl)
+                            Hemoglobina (zakres)
                         </button>
                         <button type="button" class="btn btn-outline-info btn-sm" 
                                 onclick="setExampleThreshold()">
-                            Glukoza (≤ 100 mg/dl)
+                            Glukoza (próg)
                         </button>
                         <button type="button" class="btn btn-outline-info btn-sm" 
                                 onclick="setExamplePositiveNegative()">
-                            Test HIV (negatywny)
+                            Test HIV (pos/neg)
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" 
+                                onclick="setExampleBreathTest()">
+                            Test oddechowy
                         </button>
                     </div>
                 </div>
@@ -331,112 +400,198 @@ $actionUrl = $isUpdate
     </div>
 </div>
 
-<!-- JavaScript dla formularza -->
 <script>
-// Funkcje przełączania pól
+// JavaScript functions
 function toggleNormFields(type) {
-    // Ukryj wszystkie specyficzne pola
-    document.querySelectorAll('#positive-negative-fields, #range-fields, #single-threshold-fields, #multiple-thresholds-fields').forEach(el => {
-        el.style.display = 'none';
-    });
+    console.log('toggleNormFields called with type:', type);
     
-    // Pokaż odpowiednie pola
-    if (type) {
-        const targetField = document.getElementById(type.replace('_', '-') + '-fields');
-        if (targetField) {
-            targetField.style.display = 'block';
-        }
+    // Hide all specific fields
+    $('#positive-negative-fields, #range-fields, #single-threshold-fields, #multiple-thresholds-fields').hide();
+    
+    // Show specific fields based on type
+    switch(type) {
+        case 'positive_negative':
+            $('#positive-negative-fields').show();
+            break;
+        case 'range':
+            $('#range-fields').show();
+            break;
+        case 'single_threshold':
+            $('#single-threshold-fields').show();
+            break;
+        case 'multiple_thresholds':
+            $('#multiple-thresholds-fields').show();
+            break;
     }
     
+    // Update zones preview
     updateZonesPreview();
 }
 
 function toggleWarningFields(enabled) {
-    const warningFields = document.getElementById('warning-fields');
-    if (warningFields) {
-        warningFields.style.display = enabled ? 'block' : 'none';
+    console.log('toggleWarningFields called with enabled:', enabled);
+    
+    if (enabled) {
+        $('#warning-fields').show();
+    } else {
+        $('#warning-fields').hide();
     }
+    
     updateZonesPreview();
 }
 
-// Aktualizacja podglądu stref
+function toggleThresholdConfigType(type) {
+    console.log('toggleThresholdConfigType called with:', type);
+    
+    // Ukryj wszystkie sekcje konfiguracji
+    document.getElementById('breath-test-config').style.display = 'none';
+    document.getElementById('standard-thresholds-config').style.display = 'none';
+    
+    // Pokaż odpowiednią sekcję
+    if (type === 'breath_test') {
+        document.getElementById('breath-test-config').style.display = 'block';
+        console.log('Showing breath-test-config');
+    } else if (type === 'standard') {
+        document.getElementById('standard-thresholds-config').style.display = 'block';
+        console.log('Showing standard-thresholds-config');
+    }
+}
+
+function generateBreathTestConfig() {
+    console.log('generateBreathTestConfig called');
+    
+    const maxIncrease = document.getElementById('breath-test-max-increase').value || 12;
+    const gasType = document.getElementById('breath-test-gas-type').value;
+    
+    console.log('Max increase:', maxIncrease);
+    console.log('Gas type:', gasType);
+    
+    const config = {
+        "measurement_type": "hydrogen_breath_test",
+        "max_increase": parseFloat(maxIncrease),
+        "gas_type": gasType,
+        "time_points": [0, 30, 60, 120, 180],
+        "interpretation": {
+            "normal": `Brak nietolerancji laktozy - wzrost ${gasType === 'hydrogen' ? 'wodoru' : 'metanu'} ≤ ${maxIncrease} ppm`,
+            "abnormal": `Nietolerancja laktozy potwierdzona - wzrost ${gasType === 'hydrogen' ? 'wodoru' : 'metanu'} > ${maxIncrease} ppm`
+        }
+    };
+    
+    const jsonString = JSON.stringify(config, null, 2);
+    console.log('Generated JSON:', jsonString);
+    
+    const jsonField = document.getElementById('thresholds-config-json');
+    if (jsonField) {
+        jsonField.value = jsonString;
+        console.log('JSON written to field');
+        
+        // Sprawdź czy rzeczywiście zapisało
+        console.log('Field value after writing:', jsonField.value);
+    } else {
+        console.error('Could not find thresholds-config-json field!');
+    }
+    
+    alert('Konfiguracja testu oddechowego została wygenerowana!');
+}
+
+function generateStandardConfig() {
+    const thresholds = [];
+    const thresholdItems = document.querySelectorAll('.threshold-item');
+    
+    thresholdItems.forEach(item => {
+        const value = item.querySelector('.threshold-value').value;
+        const isNormal = item.querySelector('.threshold-normal').value === 'true';
+        const description = item.querySelector('.threshold-description').value;
+        
+        if (value) {
+            thresholds.push({
+                "value": parseFloat(value),
+                "is_normal": isNormal,
+                "description": description || `Próg ${value}`
+            });
+        }
+    });
+    
+    if (thresholds.length === 0) {
+        showNotification('Dodaj przynajmniej jeden próg!', 'warning');
+        return;
+    }
+    
+    // Sortuj progi według wartości
+    thresholds.sort((a, b) => a.value - b.value);
+    
+    const config = {
+        "measurement_type": "standard_thresholds",
+        "thresholds": thresholds
+    };
+    
+    document.getElementById('thresholds-config-json').value = JSON.stringify(config, null, 2);
+    
+    showNotification('Konfiguracja progów została wygenerowana!', 'success');
+}
+
+function addThreshold() {
+    const container = document.getElementById('thresholds-container');
+    const newThreshold = document.querySelector('.threshold-item').cloneNode(true);
+    
+    // Wyczyść wartości w nowym elemencie
+    newThreshold.querySelectorAll('input').forEach(input => input.value = '');
+    newThreshold.querySelector('select').selectedIndex = 0;
+    
+    container.appendChild(newThreshold);
+}
+
+function removeThreshold(button) {
+    const thresholdItems = document.querySelectorAll('.threshold-item');
+    if (thresholdItems.length > 1) {
+        button.closest('.threshold-item').remove();
+    } else {
+        showNotification('Musi zostać przynajmniej jeden próg!', 'warning');
+    }
+}
+
+function showNotification(message, type = 'info') {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
 function updateZonesPreview() {
     const type = document.getElementById('norm-type-select').value;
-    const warningEnabled = document.querySelector('input[name="ParameterNorm[warning_enabled]"]').checked;
-    
     let preview = '';
     
     if (type === 'range') {
-        const min = parseFloat(document.querySelector('input[name="ParameterNorm[min_value]"]').value) || 0;
-        const max = parseFloat(document.querySelector('input[name="ParameterNorm[max_value]"]').value) || 10;
-        const warningMargin = parseFloat(document.querySelector('input[name="ParameterNorm[warning_margin_percent]"]').value) || 10;
-        const cautionMargin = parseFloat(document.querySelector('input[name="ParameterNorm[caution_margin_percent]"]').value) || 5;
-        
-        const range = max - min;
-        const warningMarginValue = range * (warningMargin / 100);
-        const cautionMarginValue = range * (cautionMargin / 100);
-        
         preview = `
-            <div class="zones-container">
+            <div id="zones-container">
                 <div class="zone zone-critical" style="background: #dc3545; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                    &lt; ${min.toFixed(2)} - Poza normą
+                    Poniżej normy - Krytyczne
                 </div>
-                ${warningEnabled ? `
-                <div class="zone zone-warning" style="background: #fd7e14; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                    ${min.toFixed(2)} - ${(min + warningMarginValue).toFixed(2)} - Ostrzeżenie
-                </div>
-                <div class="zone zone-caution" style="background: #ffc107; color: black; padding: 2px; margin: 1px; border-radius: 2px;">
-                    ${(min + warningMarginValue).toFixed(2)} - ${(min + cautionMarginValue).toFixed(2)} - Uwaga
-                </div>
-                <div class="zone zone-optimal" style="background: #28a745; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                    ${(min + cautionMarginValue).toFixed(2)} - ${(max - cautionMarginValue).toFixed(2)} - Optymalna
-                </div>
-                <div class="zone zone-caution" style="background: #ffc107; color: black; padding: 2px; margin: 1px; border-radius: 2px;">
-                    ${(max - cautionMarginValue).toFixed(2)} - ${(max - warningMarginValue).toFixed(2)} - Uwaga
-                </div>
-                <div class="zone zone-warning" style="background: #fd7e14; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                    ${(max - warningMarginValue).toFixed(2)} - ${max.toFixed(2)} - Ostrzeżenie
-                </div>
-                ` : `
                 <div class="zone zone-normal" style="background: #28a745; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                    ${min.toFixed(2)} - ${max.toFixed(2)} - Normalna
+                    W normie - Normalny
                 </div>
-                `}
                 <div class="zone zone-critical" style="background: #dc3545; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                    &gt; ${max.toFixed(2)} - Poza normą
+                    Powyżej normy - Krytyczne
                 </div>
             </div>
         `;
-    } else if (type === 'single_threshold') {
-        const threshold = parseFloat(document.querySelector('input[name="ParameterNorm[threshold_value]"]').value) || 5;
-        const direction = document.querySelector('select[name="ParameterNorm[threshold_direction]"]').value;
-        
-        if (direction === 'below') {
-            preview = `
-                <div class="zones-container">
-                    <div class="zone zone-normal" style="background: #28a745; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                        ≤ ${threshold.toFixed(2)} - Normalna
-                    </div>
-                    <div class="zone zone-critical" style="background: #dc3545; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                        &gt; ${threshold.toFixed(2)} - Poza normą
-                    </div>
-                </div>
-            `;
-        } else if (direction === 'above') {
-            preview = `
-                <div class="zones-container">
-                    <div class="zone zone-critical" style="background: #dc3545; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                        &lt; ${threshold.toFixed(2)} - Poza normą
-                    </div>
-                    <div class="zone zone-normal" style="background: #28a745; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
-                        ≥ ${threshold.toFixed(2)} - Normalna
-                    </div>
-                </div>
-            `;
-        }
     } else if (type === 'positive_negative') {
         preview = `
-            <div class="zones-container">
+            <div id="zones-container">
                 <div class="zone zone-normal" style="background: #28a745; color: white; padding: 2px; margin: 1px; border-radius: 2px;">
                     Negatywny - Normalny
                 </div>
@@ -484,6 +639,21 @@ function setExamplePositiveNegative() {
     toggleNormFields('positive_negative');
 }
 
+function setExampleBreathTest() {
+    document.getElementById('norm-type-select').value = 'multiple_thresholds';
+    document.querySelector('input[name="ParameterNorm[name]"]').value = 'Test oddechowy - wodór';
+    toggleNormFields('multiple_thresholds');
+    
+    // Ustaw konfigurację testu oddechowego
+    document.getElementById('threshold-config-type').value = 'breath_test';
+    toggleThresholdConfigType('breath_test');
+    
+    // Automatycznie wygeneruj konfigurację
+    setTimeout(() => {
+        generateBreathTestConfig();
+    }, 500);
+}
+
 // Inicjalizacja po załadowaniu strony
 document.addEventListener('DOMContentLoaded', function() {
     const currentType = document.getElementById('norm-type-select').value;
@@ -491,8 +661,8 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleNormFields(currentType);
     }
     
-    const warningEnabled = document.querySelector('input[name="ParameterNorm[warning_enabled]"]').checked;
-    if (warningEnabled) {
+    const warningEnabled = document.querySelector('input[name="ParameterNorm[warning_enabled]"]');
+    if (warningEnabled && warningEnabled.checked) {
         toggleWarningFields(true);
     }
     
@@ -533,5 +703,18 @@ document.addEventListener('DOMContentLoaded', function() {
     background-color: #f8f9fa;
     margin: 0 -1.25rem -1.25rem -1.25rem;
     padding: 1rem 1.25rem;
+}
+
+.font-monospace {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+}
+
+.threshold-item {
+    background-color: #f8f9fa;
+}
+
+.threshold-item:hover {
+    background-color: #e9ecef;
 }
 </style>
