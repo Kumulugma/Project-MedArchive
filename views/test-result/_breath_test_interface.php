@@ -41,7 +41,8 @@ $maxIncrease = $config['max_increase'] ?? 12;
                         'placeholder' => '0.0',
                         'data-time-point' => $time,
                         'data-parameter-id' => $parameter->id,
-                        'style' => 'text-align: center;'
+                        'style' => 'text-align: center;',
+                        'oninput' => "updateBreathTestValue({$parameter->id}); updateBreathTestPreview({$parameter->id}, {$maxIncrease});"
                     ]) ?>
                     <span class="input-group-text">ppm</span>
                 </div>
@@ -64,7 +65,7 @@ $maxIncrease = $config['max_increase'] ?? 12;
                 </h6>
             </div>
             <div class="card-body">
-                <div id="breath_test_preview_{$parameter->id}" class="small">
+                <div id="breath_test_preview_<?= $parameter->id ?>" class="small">
                     <span class="text-muted">Wprowadź wartości aby zobaczyć interpretację...</span>
                 </div>
             </div>
@@ -73,13 +74,8 @@ $maxIncrease = $config['max_increase'] ?? 12;
 </div>
 
 <script>
-$(document).ready(function() {
-    // Aktualizuj połączoną wartość gdy użytkownik wprowadza dane
-    $('.breath-test-value[data-parameter-id="<?= $parameter->id ?>"]').on('input', function() {
-        updateBreathTestValue(<?= $parameter->id ?>);
-        updateBreathTestPreview(<?= $parameter->id ?>, <?= $maxIncrease ?>);
-    });
-    
+// JavaScript BEZ jQuery - vanilla JS
+document.addEventListener('DOMContentLoaded', function() {
     // Pierwsza aktualizacja jeśli są istniejące wartości
     updateBreathTestValue(<?= $parameter->id ?>);
     updateBreathTestPreview(<?= $parameter->id ?>, <?= $maxIncrease ?>);
@@ -90,29 +86,38 @@ function updateBreathTestValue(parameterId) {
     var timePoints = [0, 30, 60, 120, 180];
     
     timePoints.forEach(function(time) {
-        var input = $('input[name="breath_test_' + parameterId + '[' + time + ']"]');
-        var value = input.val().trim();
+        var input = document.querySelector('input[name="breath_test_' + parameterId + '[' + time + ']"]');
+        var value = input ? input.value.trim() : '';
         values.push(value || '0');
     });
     
     // Połącz wartości średnikiem
     var combinedValue = values.join(';');
-    $('#combined_values_' + parameterId).val(combinedValue);
+    var hiddenField = document.getElementById('combined_values_' + parameterId);
+    if (hiddenField) {
+        hiddenField.value = combinedValue;
+        console.log('Updated combined value:', combinedValue);
+    }
 }
 
 function updateBreathTestPreview(parameterId, maxIncrease) {
-    var baseline = parseFloat($('input[name="breath_test_' + parameterId + '[0]"]').val()) || 0;
+    var baselineInput = document.querySelector('input[name="breath_test_' + parameterId + '[0]"]');
+    var baseline = baselineInput ? parseFloat(baselineInput.value) || 0 : 0;
     var timePoints = [30, 60, 120, 180];
     var results = [];
     var hasAbnormal = false;
     
+    var previewElement = document.getElementById('breath_test_preview_' + parameterId);
+    if (!previewElement) return;
+    
     if (baseline === 0) {
-        $('#breath_test_preview_' + parameterId).html('<span class="text-muted">Wprowadź wartość baseline (0 min) aby zobaczyć interpretację...</span>');
+        previewElement.innerHTML = '<span class="text-muted">Wprowadź wartość baseline (0 min) aby zobaczyć interpretację...</span>';
         return;
     }
     
     timePoints.forEach(function(time) {
-        var currentValue = parseFloat($('input[name="breath_test_' + parameterId + '[' + time + ']"]').val()) || 0;
+        var input = document.querySelector('input[name="breath_test_' + parameterId + '[' + time + ']"]');
+        var currentValue = input ? parseFloat(input.value) || 0 : 0;
         var increase = currentValue - baseline;
         var isNormal = increase <= maxIncrease;
         
@@ -159,6 +164,6 @@ function updateBreathTestPreview(parameterId, maxIncrease) {
         interpretation += '</div>';
     }
     
-    $('#breath_test_preview_' + parameterId).html(html + interpretation);
+    previewElement.innerHTML = html + interpretation;
 }
 </script>

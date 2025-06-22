@@ -180,72 +180,53 @@ class TestTemplateController extends Controller {
      * OPERACJE NA NORMACH - POPRAWIONE
      */
 
-    public function actionAddNorm($id, $parameterId) {
-        $template = $this->findModel($id);
-        $parameter = TestParameter::findOne($parameterId);
-
-        if (!$parameter || $parameter->test_template_id != $template->id) {
-            throw new NotFoundHttpException('Parametr nie został znaleziony.');
-        }
-
-        $norm = new ParameterNorm();
-        $norm->parameter_id = $parameter->id;
-
-        if ($this->request->isPost && $norm->load($this->request->post())) {
-            // Obsługa wielu progów
-            if ($norm->type === 'multiple_thresholds') {
-                $thresholdValues = $this->request->post('threshold_value', []);
-                $thresholdLabels = $this->request->post('threshold_label', []);
-                $thresholdNormal = $this->request->post('threshold_normal', []);
-                $thresholdTypes = $this->request->post('threshold_type', []);
-
-                $thresholds = [];
-                for ($i = 0; $i < count($thresholdValues); $i++) {
-                    if (!empty($thresholdValues[$i])) {
-                        $thresholds[] = [
-                            'value' => (float) $thresholdValues[$i],
-                            'label' => $thresholdLabels[$i] ?? '',
-                            'is_normal' => (bool) ($thresholdNormal[$i] ?? false),
-                            'type' => $thresholdTypes[$i] ?? null,
-                        ];
-                    }
-                }
-
-                // Sortuj według wartości
-                usort($thresholds, function ($a, $b) {
-                    return $a['value'] <=> $b['value'];
-                });
-
-                $norm->thresholds_config = json_encode($thresholds);
-            }
-
-            if ($norm->save()) {
-                Yii::$app->session->setFlash('success', 'Norma została dodana.');
-                
-                // Sprawdź czy to żądanie AJAX
-                if ($this->request->isAjax) {
-                    Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-                    return ['success' => true, 'message' => 'Norma została dodana.'];
-                }
-                
-                return $this->redirect(['view', 'id' => $template->id]);
-            } else {
-                $errors = implode(', ', $norm->getFirstErrors());
-                Yii::$app->session->setFlash('error', 'Błąd zapisywania normy: ' . $errors);
-                
-                if ($this->request->isAjax) {
-                    Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-                    return ['success' => false, 'message' => 'Błąd zapisywania normy: ' . $errors];
-                }
-            }
-        }
-
-        return $this->render('add-norm', [
-            'template' => $template,
-            'parameter' => $parameter,
-            'norm' => $norm,
-        ]);
+ public function actionAddNorm($id, $parameterId) {
+    $template = $this->findModel($id);
+    $parameter = TestParameter::findOne($parameterId);
+    
+    if (!$parameter || $parameter->test_template_id != $template->id) {
+        throw new NotFoundHttpException('Parametr nie został znaleziony.');
     }
+    
+    $norm = new ParameterNorm();
+    $norm->parameter_id = $parameter->id;
+
+    if ($this->request->isPost && $norm->load($this->request->post())) {
+        
+        // Ustaw domyślne wartości jeśli nie są ustawione
+        if (empty($norm->conversion_factor)) {
+            $norm->conversion_factor = 1;
+        }
+        if (empty($norm->conversion_offset)) {
+            $norm->conversion_offset = 0;
+        }
+        
+        if ($norm->save()) {
+            Yii::$app->session->setFlash('success', 'Norma została dodana pomyślnie.');
+            
+            if ($this->request->isAjax) {
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return ['success' => true, 'message' => 'Norma została dodana.'];
+            }
+            
+            return $this->redirect(['view', 'id' => $template->id]);
+        } else {
+            $errors = implode(', ', $norm->getFirstErrors());
+            Yii::$app->session->setFlash('error', 'Błąd zapisywania normy: ' . $errors);
+            
+            if ($this->request->isAjax) {
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return ['success' => false, 'message' => 'Błąd zapisywania normy: ' . $errors];
+            }
+        }
+    }
+
+    return $this->render('add-norm', [
+        'template' => $template,
+        'parameter' => $parameter,
+        'norm' => $norm,
+    ]);
+}
 
 public function actionUpdateNorm($id, $parameterId, $normId) {
     $template = $this->findModel($id);
@@ -587,16 +568,12 @@ public function actionUpdateNorm($id, $parameterId, $normId) {
         throw new NotFoundHttpException('Szablon badania nie został znaleziony.');
     }
     
-    /**
+/**
  * Pobiera informacje o normie (AJAX endpoint)
  */
 public function actionGetNormInfo()
 {
     \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-    
-    if (!$this->request->isGet) {
-        return ['success' => false, 'message' => 'Nieprawidłowa metoda żądania.'];
-    }
     
     $normId = $this->request->get('normId');
     
