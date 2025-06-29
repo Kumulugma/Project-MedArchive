@@ -104,6 +104,8 @@ $config = [
                 'test-queue/<id:\d+>/update' => 'test-queue/update',
                 'test-queue/<id:\d+>/delete' => 'test-queue/delete',
                 'test-queue/<id:\d+>/process' => 'test-queue/process',
+                'test-queue/schedule-retest' => 'test-queue/schedule-retest', 
+                'test-queue/bulk-complete' => 'test-queue/bulk-complete',    
                 // Użytkownik
                 'profile' => 'user/profile',
                 'settings' => 'user/settings',

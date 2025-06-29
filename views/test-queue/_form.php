@@ -3,7 +3,6 @@
 use yii\helpers\Html;
 use yii\helpers\ArrayHelper;
 use yii\widgets\ActiveForm;
-use yii\jui\DatePicker;
 
 ?>
 
@@ -31,18 +30,10 @@ use yii\jui\DatePicker;
                 </div>
                 
                 <div class="col-md-6">
-                    <?= $form->field($model, 'scheduled_date')->widget(DatePicker::class, [
-                        'language' => 'pl',
-                        'dateFormat' => 'yyyy-MM-dd',
-                        'options' => [
-                            'class' => 'form-control',
-                            'placeholder' => 'Wybierz datę...'
-                        ],
-                        'clientOptions' => [
-                            'changeMonth' => true,
-                            'changeYear' => true,
-                            'minDate' => 0, // Nie pozwalaj na daty w przeszłości
-                        ]
+                    <?= $form->field($model, 'scheduled_date')->input('date', [
+                        'class' => 'form-control',
+                        'placeholder' => 'Wybierz datę...',
+                        'min' => date('Y-m-d'), // Nie pozwalaj na daty w przeszłości
                     ]) ?>
                 </div>
             </div>
@@ -72,7 +63,9 @@ use yii\jui\DatePicker;
 
             <div class="form-group mt-4">
                 <div class="d-flex justify-content-between">
-                    <?= Html::submitButton($model->isNewRecord ? '<i class="fas fa-save"></i> Zaplanuj badanie' : '<i class="fas fa-save"></i> Zapisz zmiany', [
+                    <?= Html::submitButton($model->isNewRecord ? 
+                        '<i class="fas fa-save"></i> Zaplanuj badanie' : 
+                        '<i class="fas fa-save"></i> Zapisz zmiany', [
                         'class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary'
                     ]) ?>
                     
@@ -98,10 +91,41 @@ $(document).ready(function() {
         if (selectedDate < today) {
             alert('Nie można zaplanować badania na datę z przeszłości!');
             $(this).val('');
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid').addClass('is-valid');
+            
+            // Sprawdź czy to weekend
+            var dayOfWeek = selectedDate.getDay();
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                alert('Uwaga: Wybrana data przypada na weekend');
+            }
         }
     });
     
     // Auto-focus na pierwszym polu
     $('#testqueue-test_template_id').focus();
+    
+    // Walidacja formularza przed wysłaniem
+    $('form').on('submit', function(e) {
+        var isValid = true;
+        
+        // Sprawdź czy wybrano szablon
+        if (!$('#testqueue-test_template_id').val()) {
+            $('#testqueue-test_template_id').addClass('is-invalid');
+            isValid = false;
+        }
+        
+        // Sprawdź czy wybrano datę
+        if (!$('#testqueue-scheduled_date').val()) {
+            $('#testqueue-scheduled_date').addClass('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Proszę wypełnić wszystkie wymagane pola');
+        }
+    });
 });
 </script>

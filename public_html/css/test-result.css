@@ -687,3 +687,102 @@
         display: none !important;
     }
 }
+
+/* Dodaj do public_html/css/test-result.css */
+
+/* Przyciski planowania ponownych badań */
+.schedule-retest-btn {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.schedule-retest-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-xs {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.7rem;
+    line-height: 1.2;
+    border-radius: 0.2rem;
+}
+
+/* Status badge z przyciskiem */
+.badge .btn {
+    margin-top: 0.25rem;
+    font-size: 0.65rem;
+}
+
+/* Modal planowania */
+#scheduleModal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: none;
+}
+
+#scheduleModal .modal-header .btn-close {
+    filter: invert(1);
+}
+
+#scheduleModal .alert-info {
+    border-left: 4px solid #17a2b8;
+    background-color: rgba(23, 162, 184, 0.1);
+}
+
+/* Walidacja formularza */
+.form-control.is-valid {
+    border-color: #28a745;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.94-.94 2.94 2.94'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 5.8 4.4 4.4M5.8 10.2 10.2 5.8'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* Toast notifications styling */
+#toast-container {
+    z-index: 9999;
+}
+
+.toast {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Responsywność */
+@media (max-width: 768px) {
+    .schedule-retest-btn {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+    }
+    
+    #scheduleModal .modal-dialog {
+        margin: 1rem 0.5rem;
+    }
+}
+
+/* Loading state dla przycisku */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.fa-spinner.fa-spin {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

@@ -1,30 +1,28 @@
 <?php
+
 namespace app\models;
 
 use Yii;
 use yii\db\ActiveRecord;
 use yii\behaviors\TimestampBehavior;
 
-class TestQueue extends ActiveRecord
-{
+class TestQueue extends ActiveRecord {
+
     const STATUS_PENDING = 'pending';
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
 
-    public static function tableName()
-    {
+    public static function tableName() {
         return '{{%test_queue}}';
     }
 
-    public function behaviors()
-    {
+    public function behaviors() {
         return [
             TimestampBehavior::class,
         ];
     }
 
-    public function rules()
-    {
+    public function rules() {
         return [
             [['test_template_id', 'scheduled_date'], 'required'],
             [['test_template_id'], 'integer'],
@@ -36,8 +34,7 @@ class TestQueue extends ActiveRecord
         ];
     }
 
-    public function attributeLabels()
-    {
+    public function attributeLabels() {
         return [
             'id' => 'ID',
             'test_template_id' => 'Badanie',
@@ -48,13 +45,11 @@ class TestQueue extends ActiveRecord
         ];
     }
 
-    public function getTestTemplate()
-    {
+    public function getTestTemplate() {
         return $this->hasOne(TestTemplate::class, ['id' => 'test_template_id']);
     }
 
-    public static function getStatusOptions()
-    {
+    public static function getStatusOptions() {
         return [
             self::STATUS_PENDING => 'Oczekujące',
             self::STATUS_COMPLETED => 'Wykonane',
@@ -62,15 +57,40 @@ class TestQueue extends ActiveRecord
         ];
     }
 
-    public function isUpcoming()
-    {
-        return $this->status === self::STATUS_PENDING && 
-               strtotime($this->scheduled_date) >= strtotime(date('Y-m-d'));
-    }
+    // Dodaj do modelu models/TestQueue.php w sekcji z metodami
 
-    public function isDue()
-    {
-        return $this->status === self::STATUS_PENDING && 
-               strtotime($this->scheduled_date) <= strtotime('+7 days');
+/**
+ * Sprawdza czy badanie jest przeterminowane (po terminie)
+ */
+public function isOverdue()
+{
+    return $this->status === self::STATUS_PENDING && 
+           strtotime($this->scheduled_date) < strtotime(date('Y-m-d'));
+}
+
+/**
+ * Sprawdza czy badanie jest pilne (dziś lub w ciągu 7 dni)
+ */
+public function isDue()
+{
+    if ($this->status !== self::STATUS_PENDING) {
+        return false;
     }
+    
+    $scheduledTimestamp = strtotime($this->scheduled_date);
+    $todayTimestamp = strtotime(date('Y-m-d'));
+    $sevenDaysFromNow = strtotime('+7 days');
+    
+    return $scheduledTimestamp >= $todayTimestamp && $scheduledTimestamp <= $sevenDaysFromNow;
+}
+
+/**
+ * Sprawdza czy badanie jest nadchodzące (w przyszłości)
+ */
+public function isUpcoming()
+{
+    return $this->status === self::STATUS_PENDING && 
+           strtotime($this->scheduled_date) >= strtotime(date('Y-m-d'));
+}
+
 }
